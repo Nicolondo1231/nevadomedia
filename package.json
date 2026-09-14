@@ -1,0 +1,14 @@
+{
+  "name": "poppy-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal client for the Poppy AI HTTP API",
+  "bin": { "poppy": "src/cli.js" },
+  "scripts": {
+    "verify": "node src/cli.js verify",
+    "ask": "node src/cli.js ask",
+    "boards": "node src/cli.js boards"
+  },
+  "engines": { "node": ">=18" }
+}
