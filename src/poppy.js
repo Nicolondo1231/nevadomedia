@@ -133,11 +133,18 @@ class PoppyClient {
       const text = await res.text().catch(() => '');
       let parsed;
       try { parsed = JSON.parse(text); } catch { parsed = text; }
-      const hint = res.status === 403
-        ? ' (invalid or missing API key)'
-        : res.status === 422
-          ? ' (validation error — see details)'
-          : '';
+      // A 403 can come from Poppy (bad key) or from a corporate/egress proxy
+      // between us and Poppy. Saying "bad key" for a blocked host sends you
+      // chasing the wrong problem, so tell the two apart.
+      const blockedByProxy = res.status === 403
+        && /allowlist|egress|proxy|firewall|blocked/i.test(text);
+      const hint = blockedByProxy
+        ? ' (blocked before reaching Poppy — a network proxy denied the request, the key is not the problem)'
+        : res.status === 403
+          ? ' (invalid or missing API key)'
+          : res.status === 422
+            ? ' (validation error — see details)'
+            : '';
       throw new PoppyError(`Poppy API ${res.status}${hint}: ${text.slice(0, 500)}`, {
         status: res.status,
         body: parsed,

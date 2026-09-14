@@ -71,5 +71,7 @@ const stream = await poppy.chat(conversationId, userMessage, {
 - `model` values are listed in `src/poppy.js` (`VALID_MODELS`). An unrecognized
   value makes Poppy silently fall back to `claude-sonnet-5`; the client emits a
   warning when it sees one.
-- Errors surface as `PoppyError`: 403 means the key is invalid or missing,
-  422 is a validation error whose `details` name the offending field.
+- Errors surface as `PoppyError`. A 422 is a validation error whose `details`
+  name the offending field. A 403 is either a bad key or a network proxy
+  refusing to reach `api.getpoppy.ai` at all — the message says which, so a
+  blocked host does not read as a rejected key.
