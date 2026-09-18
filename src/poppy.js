@@ -36,6 +36,10 @@ class PoppyClient {
    * @param {string} opts.apiKey        Poppy API key (gp_...). Keep it in the environment.
    * @param {string} [opts.boardId]     Default board for calls that need one.
    * @param {string} [opts.chatId]      Default Chat Node for calls that need one.
+   * @param {string} [opts.conversationId] Default thread. When set, send() targets it
+   *                                    instead of the bare knowledgebase.
+   * @param {boolean} [opts.saveHistory] Default for conversation calls: persist the
+   *                                    exchange so it shows up on the Poppy board.
    * @param {string} [opts.apiBase]     Defaults to https://api.getpoppy.ai
    * @param {string} [opts.model]       Default model, defaults to claude-sonnet-5.
    * @param {number} [opts.maxTokens]   Default max_tokens, defaults to 4000.
@@ -46,6 +50,8 @@ class PoppyClient {
     apiKey,
     boardId,
     chatId,
+    conversationId,
+    saveHistory = false,
     apiBase = 'https://api.getpoppy.ai',
     model = 'claude-sonnet-5',
     maxTokens = 4000,
@@ -56,8 +62,9 @@ class PoppyClient {
     this.apiKey = apiKey;
     this.boardId = boardId;
     this.chatId = chatId;
+    this.conversationId = conversationId;
     this.apiBase = apiBase.replace(/\/+$/, '');
-    this.defaults = { model, maxTokens, temperature };
+    this.defaults = { model, maxTokens, temperature, saveHistory };
     this.timeoutMs = timeoutMs;
   }
 
@@ -66,6 +73,8 @@ class PoppyClient {
       apiKey: env.POPPY_API_KEY,
       boardId: env.POPPY_BOARD_ID,
       chatId: env.POPPY_CHAT_ID,
+      conversationId: env.POPPY_CONVERSATION_ID || undefined,
+      saveHistory: /^(1|true|yes)$/i.test(env.POPPY_SAVE_HISTORY || ''),
       apiBase: env.POPPY_API_BASE || undefined,
       model: env.POPPY_MODEL || undefined,
       maxTokens: env.POPPY_MAX_TOKENS ? Number(env.POPPY_MAX_TOKENS) : undefined,
@@ -184,13 +193,34 @@ class PoppyClient {
    * sees it on their Poppy board.
    */
   async chat(conversationId, prompt, opts = {}) {
-    if (!conversationId) throw new PoppyError('Missing conversationId');
-    const url = this.#url(`/api/conversation/${encodeURIComponent(conversationId)}`, this.#scope(opts));
+    const id = conversationId || this.conversationId;
+    if (!id) throw new PoppyError('Missing conversationId');
+    // An explicit false must be able to turn the configured default off, so
+    // merge with ?? rather than letting an absent flag overwrite the default.
+    const saveHistory = opts.saveHistory ?? this.defaults.saveHistory;
+    const url = this.#url(`/api/conversation/${encodeURIComponent(id)}`, this.#scope(opts));
     return this.#request(url, {
       method: 'POST',
-      body: this.#promptBody(prompt, opts),
+      body: this.#promptBody(prompt, { ...opts, saveHistory }),
       streaming: Boolean(opts.streaming),
     });
+  }
+
+  /**
+   * Send a prompt to whatever this client is configured to target: the default
+   * conversation when one is set, otherwise the bare knowledgebase.
+   */
+  async send(prompt, opts = {}) {
+    return this.conversationId
+      ? this.chat(this.conversationId, prompt, opts)
+      : this.ask(prompt, opts);
+  }
+
+  /** Which endpoint send() will use — handy for logging and for the CLI. */
+  get target() {
+    return this.conversationId
+      ? { kind: 'conversation', conversationId: this.conversationId, saveHistory: this.defaults.saveHistory }
+      : { kind: 'knowledgebase' };
   }
 
   /** Endpoint 4a — every board the key's owner has. */

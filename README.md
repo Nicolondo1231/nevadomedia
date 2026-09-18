@@ -21,12 +21,22 @@ node src/cli.js verify
 `.env` is git-ignored. **Never commit the API key** — it is a live secret that
 spends real credits.
 
+## The configured target
+
+`.env` decides where `send` goes. With `POPPY_CONVERSATION_ID` set it goes to
+that thread — the model sees the thread's history, and `POPPY_SAVE_HISTORY=true`
+persists each exchange so it appears on the Poppy board. Clear
+`POPPY_CONVERSATION_ID` and `send` queries the bare knowledgebase instead.
+`node src/cli.js target` prints which of the two you are pointed at.
+
 ## CLI
 
 ```sh
-node src/cli.js ask "Summarize the knowledgebase" --plaintext
+node src/cli.js send "What did we decide?"        # the configured target
+node src/cli.js ask "Summarize the knowledgebase" # always knowledgebase, never saved
 node src/cli.js new "Support bot thread"          # -> conversationId
-node src/cli.js chat <conversationId> "What did we decide?" --save
+node src/cli.js chat [conversationId] "..."       # id defaults to POPPY_CONVERSATION_ID
+node src/cli.js target                            # what send would hit
 node src/cli.js boards                            # every board you own
 node src/cli.js chats [boardId]                   # Chat Nodes + conversations
 node src/cli.js usage --from 2026-09-01 --to 2026-09-14
@@ -34,8 +44,9 @@ node src/cli.js usage --from 2026-09-01 --to 2026-09-14
 
 Run `node src/cli.js` with no arguments for the full flag list. Useful ones:
 `--model`, `--max-tokens`, `--temperature`, `--plaintext`, `--stream`,
-`--save`, `--user` / `--source` (chatbot metadata), `--board` / `--chat`
-(override the configured ids).
+`--save` / `--no-save` (override `POPPY_SAVE_HISTORY` for one call),
+`--user` / `--source` (chatbot metadata), `--board` / `--chat` (override the
+configured ids).
 
 ## Library
 
@@ -44,8 +55,11 @@ import { PoppyClient } from './src/poppy.js';
 
 const poppy = PoppyClient.fromEnv();
 
+// Whatever .env points at — the configured thread, or the knowledgebase.
+const { text, credits_remaining } = await poppy.send('What did we decide?');
+
 // One-off question against the knowledgebase — nothing is saved.
-const { text, credits_remaining } = await poppy.ask('Summarize the knowledgebase');
+await poppy.ask('Summarize the knowledgebase');
 
 // An assistant that remembers context, visible on the Poppy board.
 const { conversationId } = await poppy.createConversation({ name: 'Research thread' });

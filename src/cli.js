@@ -33,9 +33,11 @@ function loadDotenv(path = '.env') {
 const USAGE = `Poppy AI CLI — config comes from .env (see .env.example)
 
   node src/cli.js verify
+  node src/cli.js send "What did we decide?"     # the configured target
   node src/cli.js ask "Summarize the knowledgebase" --plaintext
   node src/cli.js new "Support bot thread"
-  node src/cli.js chat <conversationId> "What did we decide?" --save
+  node src/cli.js chat [conversationId] "..."    # id defaults to POPPY_CONVERSATION_ID
+  node src/cli.js target                         # show what send would hit
   node src/cli.js boards
   node src/cli.js chats [boardId]
   node src/cli.js usage --from 2026-09-01 --to 2026-09-14
@@ -47,7 +49,8 @@ Flags
   --context <text>    extra context prepended to the prompt
   --plaintext         strip markdown from the reply
   --stream            stream the reply as text/SSE
-  --save              persist the exchange to the Poppy board (chat only)
+  --save / --no-save  persist the exchange to the Poppy board, or don't
+                      (overrides POPPY_SAVE_HISTORY; conversation calls only)
   --usage             include token usage in the response
   --user <id>         chatbot metadata: who sent the message
   --source <name>     chatbot metadata: where it came from
@@ -62,7 +65,7 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (!arg.startsWith('--')) { positional.push(arg); continue; }
     const name = arg.slice(2);
-    const boolean = ['plaintext', 'stream', 'save', 'usage'];
+    const boolean = ['plaintext', 'stream', 'save', 'no-save', 'usage'];
     if (boolean.includes(name)) flags[name] = true;
     else flags[name] = argv[++i];
   }
@@ -74,10 +77,13 @@ function promptOptions(flags) {
     plaintext: flags.plaintext,
     streaming: flags.stream,
     includeUsage: flags.usage,
-    saveHistory: flags.save,
     boardId: flags.board,
     chatId: flags.chat,
   };
+  // Leave saveHistory absent unless asked either way, so the configured
+  // default (POPPY_SAVE_HISTORY) survives.
+  if (flags.save) opts.saveHistory = true;
+  if (flags['no-save']) opts.saveHistory = false;
   if (flags.model) opts.model = flags.model;
   if (flags['max-tokens']) opts.maxTokens = Number(flags['max-tokens']);
   if (flags.temperature) opts.temperature = Number(flags.temperature);
@@ -111,7 +117,7 @@ async function main() {
   const { positional, flags } = parseArgs(process.argv.slice(2));
   const [command, ...rest] = positional;
 
-  const known = ['verify', 'ask', 'new', 'chat', 'boards', 'chats', 'usage'];
+  const known = ['verify', 'send', 'ask', 'new', 'chat', 'target', 'boards', 'chats', 'usage'];
   if (!command || !known.includes(command)) {
     console.error(USAGE);
     process.exitCode = command ? 1 : 0;
@@ -139,11 +145,21 @@ async function main() {
         ...promptOptions(flags),
       }));
       break;
+    case 'send':
+      await printResult(await poppy.send(rest.join(' '), promptOptions(flags)));
+      break;
     case 'chat': {
-      const [conversationId, ...words] = rest;
+      // A leading UUID-shaped token is a conversation id; anything else is the
+      // start of the prompt and the configured conversation is used.
+      const looksLikeId = rest.length > 1 && /^[0-9a-f]{8}-[0-9a-f-]{8,}$/i.test(rest[0]);
+      const conversationId = looksLikeId ? rest[0] : undefined;
+      const words = looksLikeId ? rest.slice(1) : rest;
       await printResult(await poppy.chat(conversationId, words.join(' '), promptOptions(flags)));
       break;
     }
+    case 'target':
+      console.log(JSON.stringify(poppy.target, null, 2));
+      break;
     case 'boards':
       await printResult(await poppy.listBoards());
       break;
