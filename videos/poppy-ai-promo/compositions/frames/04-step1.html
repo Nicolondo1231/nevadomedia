@@ -1,0 +1,51 @@
+<template data-composition-id="f4">
+  <div id="root" data-composition-id="f4" data-width="1080" data-height="1920">
+    <div class="step">1</div>
+    <div id="srcs" data-layout-allow-overlap><div class="src">A YOUTUBE CHANNEL</div><div class="src">A COMPETITOR</div><div class="src">YOUR OWN PAGE</div></div>
+    <div id="analyz" data-layout-allow-overlap><div id="alabel">ANALYZING…</div><div id="track"><div id="fill"></div></div></div>
+    <div id="grid" data-layout-allow-overlap>
+      <div class="card"><div class="thumb"></div><div class="badge">14X</div><div class="clab">OUTLIER</div></div>
+      <div class="card"><div class="thumb"></div><div class="badge">9X</div><div class="clab">OUTLIER</div></div>
+      <div class="card"><div class="thumb"></div><div class="badge">22X</div><div class="clab">OUTLIER</div></div>
+      <div class="card"><div class="thumb"></div><div class="badge">11X</div><div class="clab">OUTLIER</div></div>
+      <div class="card"><div class="thumb"></div><div class="badge">17X</div><div class="clab">OUTLIER</div></div>
+      <div class="card"><div class="thumb"></div><div class="badge">8X</div><div class="clab">OUTLIER</div></div>
+    </div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#12101F;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      .step{position:absolute;left:7%;top:5%;font-size:250px;font-weight:900;color:#F4938F;line-height:1;}
+      #srcs{position:absolute;left:7%;right:7%;top:34%;}
+      .src{font-size:44px;font-weight:800;color:#F7F6FD;border-left:10px solid #7F78EB;padding-left:26px;margin-bottom:26px;}
+      #analyz{position:absolute;left:12%;right:12%;top:40%;background:#7F78EB;border:6px solid #12101F;
+        box-shadow:14px 14px 0 #8781EC;padding:44px;}
+      #alabel{font-size:42px;font-weight:900;letter-spacing:.16em;color:#12101F;margin-bottom:26px;}
+      #track{height:34px;background:#F7F6FD;border:4px solid #12101F;}
+      #fill{height:100%;width:100%;background:#F4938F;transform-origin:0 50%;}
+      #grid{position:absolute;left:6%;right:6%;top:26%;display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+      .card{position:relative;background:#F7F6FD;border:6px solid #12101F;box-shadow:12px 12px 0 #7F78EB;padding:16px;}
+      .thumb{height:190px;background:#CAC7F7;border:4px solid #12101F;}
+      .card:nth-child(2n) .thumb{background:#8781EC;}
+      .badge{position:absolute;right:-14px;top:-22px;background:#F4938F;border:5px solid #12101F;
+        font-size:44px;font-weight:900;color:#12101F;padding:6px 18px;}
+      .clab{font-size:24px;font-weight:800;letter-spacing:.18em;color:#12101F;margin-top:14px;}
+    </style>
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo(".step", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }, 0);
+        tl.fromTo(".src", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.42, stagger: 0.36, ease: "power3.out" }, 1.2);
+        tl.to(".src", { opacity: 0, duration: 0.3, ease: "power2.in" }, 2.5);
+        tl.fromTo("#analyz", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 2.6);
+        tl.fromTo("#fill", { scaleX: 0 }, { scaleX: 1, duration: 1.25, ease: "power1.inOut" }, 2.8);
+        tl.to("#analyz", { opacity: 0, scale: 1.6, duration: 0.35, ease: "power2.in" }, 4.0);
+        tl.fromTo("#grid", { opacity: 0, scale: 0.72 }, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }, 4.05);
+        tl.fromTo(".card", { opacity: 0, y: 90, rotateX: 55 }, { opacity: 1, y: 0, rotateX: 0, duration: 0.5, stagger: 0.085, ease: "power3.out" }, 4.1);
+        tl.fromTo(".card:nth-child(1) .badge", { scale: 1 }, { scale: 1.34, duration: 0.3, ease: "power3.out" }, 5.1);
+        tl.to(".card:nth-child(1) .badge", { scale: 1.12, duration: 0.45, ease: "power2.out" }, 5.4);
+        window.__timelines["f4"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

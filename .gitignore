@@ -2,3 +2,9 @@
 .env.*
 !.env.example
 node_modules/
+
+# HyperFrames video project — generated media and renders
+videos/*/renders/
+videos/*/assets/voice/
+videos/*/assets/voice_raw/
+videos/*/node_modules/

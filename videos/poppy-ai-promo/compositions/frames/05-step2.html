@@ -1,0 +1,58 @@
+<template data-composition-id="f5">
+  <div id="root" data-composition-id="f5" data-width="1080" data-height="1920">
+    <div class="step">2</div>
+    <div id="yours"><div class="yt"></div><div class="yt"></div><div class="yt"></div></div>
+    <div id="vp">
+      <div id="vplabel">YOUR VOICE</div>
+      <svg id="wave" viewBox="0 0 800 200" preserveAspectRatio="none">
+        <path id="wpath" d="M0,100 C60,30 110,170 170,100 C230,30 280,170 340,100 C400,30 450,170 510,100 C570,30 620,170 680,100 C730,50 770,150 800,100"></path>
+      </svg>
+    </div>
+    <div id="prompt"><span id="ptext"></span><span id="pcaret"></span></div>
+    <div id="out">
+      <div class="sc"></div><div class="sc"></div><div class="sc"></div><div class="sc"></div>
+    </div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#12101F;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      .step{position:absolute;left:7%;top:5%;font-size:250px;font-weight:900;color:#F4938F;line-height:1;}
+      #yours{position:absolute;left:10%;right:10%;top:31%;display:flex;gap:22px;justify-content:center;}
+      .yt{width:210px;height:128px;background:#CAC7F7;border:5px solid #12101F;}
+      .yt:nth-child(2){background:#F59D99;}
+      #vp{position:absolute;left:8%;right:8%;top:40%;background:#7F78EB;border:6px solid #12101F;
+        box-shadow:14px 14px 0 #8781EC;padding:34px 30px;}
+      #vplabel{font-size:34px;font-weight:900;letter-spacing:.2em;color:#12101F;margin-bottom:18px;}
+      #wave{width:100%;height:170px;}
+      #wpath{fill:none;stroke:#F7F6FD;stroke-width:9;stroke-linecap:round;}
+      #prompt{position:absolute;left:8%;right:8%;top:60%;background:#F7F6FD;border:6px solid #12101F;
+        padding:24px 26px;display:flex;align-items:center;min-height:96px;}
+      #ptext{font-family:ui-monospace,monospace;font-size:40px;font-weight:600;color:#12101F;white-space:pre;}
+      #pcaret{display:inline-block;width:5px;height:48px;background:#F4938F;margin-left:4px;}
+      #out{position:absolute;left:12%;right:12%;top:72%;}
+      .sc{height:74px;background:#F7F6FD;border:5px solid #12101F;box-shadow:10px 10px 0 #7F78EB;margin-bottom:18px;}
+    </style>
+    <script>
+      (function () {
+        const TXT = "write me 10 scripts";
+        const host = document.getElementById("ptext");
+        const chars = [];
+        for (const ch of TXT) { const s = document.createElement("span"); s.textContent = ch; host.appendChild(s); chars.push(s); }
+        const p = document.getElementById("wpath");
+        const len = p.getTotalLength ? p.getTotalLength() : 1200;
+        p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo(".step", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.01, ease: "none" }, 0);
+        tl.fromTo(".yt", { opacity: 0, x: (i) => (i - 1) * 300 }, { opacity: 1, x: 0, duration: 0.6, stagger: 0.07, ease: "power3.out" }, 0.55);
+        tl.fromTo("#vp", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 1.0);
+        tl.fromTo(p, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, 1.2);
+        tl.fromTo("#prompt", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 2.1);
+        tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.048, ease: "none" }, 2.3);
+        tl.fromTo("#pcaret", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, 2.3);
+        tl.to("#pcaret", { opacity: 0, duration: 0.01, ease: "none" }, 3.35);
+        tl.fromTo(".sc", { opacity: 0, y: -40, scaleY: 0.5 }, { opacity: 1, y: 0, scaleY: 1, duration: 0.42, stagger: 0.11, ease: "power3.out" }, 3.4);
+        window.__timelines["f5"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

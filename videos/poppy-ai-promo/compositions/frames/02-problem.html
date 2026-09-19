@@ -1,0 +1,50 @@
+<template data-composition-id="f2">
+  <div id="root" data-composition-id="f2" data-width="1080" data-height="1920">
+    <div id="left">
+      <div class="tag">GENERIC AI</div>
+      <div class="bar w1"></div><div class="bar w2"></div><div class="bar w3"></div>
+      <div class="bar w2"></div><div class="bar w1"></div><div class="bar w3"></div>
+      <div class="bar w2"></div><div class="bar w1"></div>
+    </div>
+    <div id="right">
+      <div class="tag lav">POPPY</div>
+      <div id="thumbs">
+        <div class="th"></div><div class="th"></div><div class="th"></div>
+        <div class="th"></div><div class="th"></div><div class="th"></div>
+      </div>
+    </div>
+    <div id="pivot">IT NEVER<br />ACTUALLY<br /><em>SAW YOU.</em></div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#12101F;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      #left,#right{position:absolute;top:9%;height:64%;width:46%;border:6px solid #12101F;padding:38px 32px;}
+      #left{left:3%;background:#9A98A8;box-shadow:14px 14px 0 #6E6C7A;}
+      #right{right:3%;background:#7F78EB;box-shadow:14px 14px 0 #8781EC;}
+      .tag{font-size:26px;font-weight:900;letter-spacing:.2em;color:#12101F;margin-bottom:30px;}
+      .bar{height:30px;background:#C9C7D2;border:3px solid #12101F;margin-bottom:20px;}
+      .w1{width:92%}.w2{width:74%}.w3{width:84%}
+      #thumbs{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+      .th{height:132px;border:4px solid #12101F;background:#CAC7F7;}
+      .th:nth-child(2n){background:#F59D99;}
+      #pivot{position:absolute;left:0;right:0;top:75%;text-align:center;font-size:106px;line-height:.96;
+        font-weight:900;letter-spacing:-.03em;color:#F7F6FD;}
+      #pivot em{font-style:normal;color:#F4938F;}
+    </style>
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#left", { opacity: 0, x: -260, rotateY: 34 }, { opacity: 1, x: 0, rotateY: 0, duration: 0.85, ease: "power3.out" }, 0);
+        tl.fromTo(".bar", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.07, ease: "power3.out" }, 0.35);
+        tl.to("#left", { filter: "saturate(0.15) brightness(0.62)", duration: 0.9, ease: "power2.out" }, 2.0);
+        tl.to("#left", { y: 44, duration: 0.9, ease: "power3.out" }, 2.0);
+        const w = document.querySelectorAll("#pivot");
+        tl.fromTo("#pivot", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 2.15);
+        tl.fromTo("#right", { opacity: 0, x: 260, rotateY: -34 }, { opacity: 1, x: 0, rotateY: 0, duration: 0.85, ease: "power3.out" }, 3.6);
+        tl.fromTo(".th", { opacity: 0, scale: 0.72 }, { opacity: 1, scale: 1, duration: 0.45, stagger: 0.075, ease: "power3.out" }, 3.9);
+        tl.to("#right", { y: -34, duration: 0.8, ease: "power3.out" }, 3.9);
+        window.__timelines["f2"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

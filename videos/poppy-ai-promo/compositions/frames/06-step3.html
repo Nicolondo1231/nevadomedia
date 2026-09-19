@@ -1,0 +1,48 @@
+<template data-composition-id="f6">
+  <div id="root" data-composition-id="f6" data-width="1080" data-height="1920">
+    <div id="world">
+      <div id="boardwrap">
+        <svg id="spine" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+          <line class="sp" x1="500" y1="500" x2="200" y2="200"></line>
+          <line class="sp" x1="500" y1="500" x2="800" y2="200"></line>
+          <line class="sp" x1="500" y1="500" x2="200" y2="800"></line>
+          <line class="sp" x1="500" y1="500" x2="800" y2="800"></line>
+        </svg>
+        <div id="hub">POPPY</div>
+        <div class="cl c1"><span>SCRIPTS</span><i></i><i></i><i></i></div>
+        <div class="cl c2"><span>ADS</span><i></i><i></i><i></i></div>
+        <div class="cl c3"><span>EMAILS</span><i></i><i></i><i></i></div>
+        <div class="cl c4"><span>LANDING PAGE</span><i></i><i></i><i></i></div>
+      </div>
+    </div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#7F78EB;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      #world{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+      #boardwrap{position:relative;width:960px;height:960px;}
+      #spine{position:absolute;inset:0;width:100%;height:100%;}
+      .sp{stroke:#F7F6FD;stroke-width:6;opacity:.8;}
+      #hub{position:absolute;left:50%;top:50%;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;
+        background:#12101F;color:#F4938F;font-weight:900;font-size:36px;letter-spacing:.12em;
+        display:flex;align-items:center;justify-content:center;}
+      .cl{position:absolute;width:330px;background:#F7F6FD;border:6px solid #12101F;box-shadow:12px 12px 0 #8781EC;padding:20px;}
+      .cl span{display:block;font-size:34px;font-weight:900;letter-spacing:.1em;color:#12101F;margin-bottom:16px;}
+      .cl i{display:block;height:20px;background:#CAC7F7;border:3px solid #12101F;margin-bottom:12px;}
+      .c1{left:0;top:2%}.c2{right:0;top:2%}.c3{left:0;bottom:2%}.c4{right:0;bottom:2%}
+      .c2 i,.c4 i{background:#F59D99;}
+    </style>
+    <script>
+      (function () {
+        const sps = document.querySelectorAll(".sp");
+        sps.forEach((s) => { const l = s.getTotalLength ? s.getTotalLength() : 500; s.style.strokeDasharray = l; s.style.strokeDashoffset = l; });
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#world", { scale: 3.4, y: 260 }, { scale: 1, y: 0, duration: 2.2, ease: "power3.out" }, 0.55);
+        tl.fromTo("#hub", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" }, 1.6);
+        tl.fromTo(".cl", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.42, stagger: 0.3, ease: "power3.out" }, 2.4);
+        tl.fromTo(sps, { strokeDashoffset: (i, t) => t.style.strokeDasharray }, { strokeDashoffset: 0, duration: 0.45, stagger: 0.3, ease: "power2.out" }, 2.45);
+        window.__timelines["f6"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

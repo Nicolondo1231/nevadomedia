@@ -1,0 +1,53 @@
+<template data-composition-id="f1">
+  <div id="root" data-composition-id="f1" data-width="1080" data-height="1920">
+    <div id="stage">
+      <div id="glow"></div>
+      <div id="field">
+        <div id="fieldlabel">PASTE A LINK</div>
+        <div id="urlrow"><span id="url"></span><span id="caret"></span></div>
+      </div>
+    </div>
+    <div id="slam">WAIT, IT<br /><em>WATCHES</em> IT?</div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#12101F;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      #stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+      #glow{position:absolute;width:820px;height:820px;border-radius:50%;
+        background:radial-gradient(circle,rgba(127,120,235,.46),rgba(127,120,235,0) 68%);}
+      #field{position:relative;width:820px;background:#7F78EB;border:6px solid #12101F;
+        box-shadow:16px 16px 0 #8781EC;padding:44px 48px 52px;}
+      #fieldlabel{font-size:30px;font-weight:800;letter-spacing:.22em;color:#12101F;opacity:.72;margin-bottom:22px;}
+      #urlrow{display:flex;align-items:center;min-height:74px;background:#F7F6FD;border:5px solid #12101F;padding:12px 20px;}
+      #url{font-family:ui-monospace,monospace;font-size:38px;font-weight:600;color:#12101F;white-space:pre;}
+      #caret{display:inline-block;width:5px;height:46px;background:#F4938F;margin-left:4px;}
+      #slam{position:absolute;left:0;right:0;top:27%;text-align:center;font-size:132px;line-height:.94;
+        font-weight:900;letter-spacing:-.03em;color:#F4938F;transform-origin:50% 50%;}
+      #slam em{font-style:normal;color:#F7F6FD;}
+    </style>
+    <script>
+      (function () {
+        const URLTEXT = "youtube.com/@competitor";
+        const host = document.getElementById("url");
+        const chars = [];
+        for (const ch of URLTEXT) {
+          const s = document.createElement("span");
+          s.textContent = ch;
+          host.appendChild(s);
+          chars.push(s);
+        }
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }, 0);
+        tl.fromTo("#field", { opacity: 0, scale: 0.86, y: 60 }, { opacity: 1, scale: 1, y: 0, duration: 0.85, ease: "power3.out" }, 0.05);
+        tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.042, ease: "none" }, 1.4);
+        tl.fromTo("#caret", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, 1.4);
+        tl.to("#caret", { opacity: 0, duration: 0.01, ease: "none" }, 2.62);
+        tl.fromTo("#stage", { scale: 1 }, { scale: 1.42, duration: 0.62, ease: "expo.out" }, 2.6);
+        tl.to("#glow", { opacity: 0.35, duration: 0.5, ease: "power2.out" }, 2.6);
+        tl.fromTo("#slam", { opacity: 0, scale: 0.7, rotate: -3 }, { opacity: 1, scale: 1, rotate: -3, duration: 0.5, ease: "expo.out" }, 2.72);
+        tl.to("#slam", { y: -6, duration: 0.6, ease: "sine.inOut" }, 3.3);
+        window.__timelines["f1"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

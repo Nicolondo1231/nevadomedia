@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #12101F; }
+      #root { width: 100%; height: 100%; position: relative; overflow: hidden; }
+      .clip { position: absolute; inset: 0; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="48.21"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="clip" data-composition-id="f1" data-composition-src="compositions/frames/01-hook.html"
+           data-start="0" data-duration="4.10" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f2" data-composition-src="compositions/frames/02-problem.html"
+           data-start="4.10" data-duration="6.09" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f3" data-composition-src="compositions/frames/03-turn.html"
+           data-start="10.19" data-duration="5.15" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f4" data-composition-src="compositions/frames/04-step1.html"
+           data-start="15.34" data-duration="6.55" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f5" data-composition-src="compositions/frames/05-step2.html"
+           data-start="21.89" data-duration="4.44" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f6" data-composition-src="compositions/frames/06-step3.html"
+           data-start="26.33" data-duration="4.42" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f7" data-composition-src="compositions/frames/07-proof.html"
+           data-start="30.75" data-duration="6.02" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f8" data-composition-src="compositions/frames/08-crowd.html"
+           data-start="36.77" data-duration="5.81" data-track-index="0"></div>
+      <div class="clip" data-composition-id="f9" data-composition-src="compositions/frames/09-cta.html"
+           data-start="42.58" data-duration="5.63" data-track-index="0"></div>
+
+      <audio id="vo1" src="assets/voice/01.wav" data-start="0" data-track-index="1"></audio>
+      <audio id="vo2" src="assets/voice/02.wav" data-start="4.10" data-track-index="1"></audio>
+      <audio id="vo3" src="assets/voice/03.wav" data-start="10.19" data-track-index="1"></audio>
+      <audio id="vo4" src="assets/voice/04.wav" data-start="15.34" data-track-index="1"></audio>
+      <audio id="vo5" src="assets/voice/05.wav" data-start="21.89" data-track-index="1"></audio>
+      <audio id="vo6" src="assets/voice/06.wav" data-start="26.33" data-track-index="1"></audio>
+      <audio id="vo7" src="assets/voice/07.wav" data-start="30.75" data-track-index="1"></audio>
+      <audio id="vo8" src="assets/voice/08.wav" data-start="36.77" data-track-index="1"></audio>
+      <audio id="vo9" src="assets/voice/09.wav" data-start="42.58" data-track-index="1"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.to({}, { duration: 48.21 }, 0);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

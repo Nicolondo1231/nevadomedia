@@ -1,0 +1,53 @@
+<template data-composition-id="f7">
+  <div id="root" data-composition-id="f7" data-width="1080" data-height="1920">
+    <div id="bloom"></div>
+    <div id="card" data-layout-allow-overlap>
+      <div id="head" data-layout-allow-overlap>$29K</div>
+      <div id="sub" data-layout-allow-overlap>ON $800 SPEND</div>
+      <div id="roas">36X ROAS</div>
+      <div id="copy">POPPY WROTE <b>100%</b> OF THE COPY</div>
+    </div>
+    <div id="counter" data-layout-allow-overlap><span id="cnum" data-layout-allow-overlap>900</span><span id="clabel" data-layout-allow-overlap>FOLLOWERS</span></div>
+    <style>
+      #root{width:100%;height:100%;position:relative;overflow:hidden;background:#12101F;
+        font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;}
+      #bloom{position:absolute;left:50%;top:38%;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;
+        background:radial-gradient(circle,rgba(244,147,143,.42),rgba(244,147,143,0) 66%);}
+      #card{position:absolute;left:8%;right:8%;top:20%;background:#F7F6FD;border:8px solid #12101F;
+        box-shadow:20px 20px 0 #7F78EB;padding:56px 48px;text-align:center;}
+      #head{font-size:210px;font-weight:900;line-height:.9;color:#12101F;letter-spacing:-.04em;}
+      #sub{font-size:44px;font-weight:800;letter-spacing:.12em;color:#12101F;opacity:.7;margin-top:14px;}
+      #roas{display:inline-block;margin-top:34px;background:#F4938F;border:6px solid #12101F;
+        font-size:70px;font-weight:900;color:#12101F;padding:12px 34px;}
+      #copy{margin-top:34px;font-size:34px;font-weight:800;letter-spacing:.06em;color:#12101F;}
+      #copy b{color:#6560BB;}
+      #counter{position:absolute;left:0;right:0;top:66%;text-align:center;}
+      #cnum{display:block;font-size:180px;font-weight:900;color:#F7F6FD;line-height:1;letter-spacing:-.03em;
+        font-variant-numeric:tabular-nums;}
+      #clabel{display:block;font-size:40px;font-weight:800;letter-spacing:.22em;color:#F4938F;margin-top:10px;}
+    </style>
+    <script>
+      (function () {
+        const n = document.getElementById("cnum");
+        const box = { v: 900 };
+        const fmt = (x) => Math.round(x).toLocaleString("en-US");
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#bloom", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" }, 0);
+        tl.fromTo("#card", { opacity: 0, scale: 0.78 }, { opacity: 1, scale: 1, duration: 0.55, ease: "expo.out" }, 0.05);
+        tl.fromTo("#head", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.3);
+        tl.fromTo("#sub", { opacity: 0 }, { opacity: 0.7, duration: 0.35, ease: "power2.out" }, 0.55);
+        tl.fromTo("#roas", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 1.15);
+        tl.fromTo("#copy", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 2.3);
+        tl.fromTo("#copy b", { scale: 1 }, { scale: 1.18, duration: 0.3, ease: "power3.out" }, 2.7);
+        tl.to("#copy b", { scale: 1, duration: 0.4, ease: "power2.out" }, 3.0);
+        tl.to("#card", { y: -140, opacity: 0, duration: 0.5, ease: "power3.in" }, 3.7);
+        tl.to("#bloom", { opacity: 0.4, duration: 0.5, ease: "power2.out" }, 3.7);
+        tl.fromTo("#counter", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 3.95);
+        tl.fromTo(box, { v: 900 }, { v: 97000, duration: 1.25, ease: "power3.out", onUpdate: () => { n.textContent = fmt(box.v); } }, 4.05);
+        tl.fromTo("#cnum", { scale: 0.86 }, { scale: 1.12, duration: 1.25, ease: "power3.out" }, 4.05);
+        window.__timelines["f7"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </div>
+</template>

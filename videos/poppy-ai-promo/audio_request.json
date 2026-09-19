@@ -1,0 +1,46 @@
+{
+  "provider": "kokoro",
+  "speed": 1.25,
+  "lines": [
+    {
+      "id": "01",
+      "text": "This AI feels illegal to know about. It watches your competitor's videos and hands you the scripts."
+    },
+    {
+      "id": "02",
+      "text": "Everyone's using ChatGPT for content and getting slop. Here's why — it never actually saw you. It's guessing from random stuff on the internet."
+    },
+    {
+      "id": "03",
+      "text": "But Poppy? Poppy only learns from what's already winning, and from your actual voice. No, this isn't another ChatGPT wrapper."
+    },
+    {
+      "id": "04",
+      "text": "Three steps. One — paste any link. A YouTube channel, a competitor, your own page. Poppy pulls their outliers — the videos that beat their average by 14X."
+    },
+    {
+      "id": "05",
+      "text": "Two — it watches your real videos and learns your voice, so when you say \"write me 10 scripts,\" they sound like you."
+    },
+    {
+      "id": "06",
+      "text": "Three — it all lives on one visual board. Scripts, ads, emails, even a landing page, all in one place."
+    },
+    {
+      "id": "07",
+      "text": "This is how Jason turned eight hundred dollars in ad spend into twenty-nine thousand in forty days — with Poppy writing 100% of the copy."
+    },
+    {
+      "id": "08",
+      "text": "It's how creators go from 900 followers to almost 100,000 in six months. Your next week of content, in your voice, done tonight."
+    },
+    {
+      "id": "09",
+      "text": "Try Poppy for one dollar. Seven days, full access. Paste your first link and watch it work. Your next winning post is already out there."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "af_sky"
+}
