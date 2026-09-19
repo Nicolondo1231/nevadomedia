@@ -99,7 +99,7 @@
       }
       #cardtitle { font-size: 30px; font-weight: 700; letter-spacing: 0.1em; color: #5B51C7; }
       #cardmeta { margin-left: auto; font-size: 26px; font-weight: 600; color: #6E6A85; }
-      #cardbody { padding: 34px 40px 40px; }
+      #cardbody { padding: 26px 34px 30px; }
 
       .sec { margin-bottom: 30px; }
       .sec:last-child { margin-bottom: 0; }
@@ -113,6 +113,14 @@
         display: inline-block; width: 5px; height: 40px; background: #5B51C7;
         vertical-align: -6px; margin-left: 4px;
       }
+
+      .hookrow { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 13px; }
+      .hooknum {
+        width: 46px; height: 46px; border-radius: 16px; flex: none;
+        background: #EFEDFD; color: #5B51C7; font-size: 26px; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .hooktext { font-size: 29px; line-height: 1.32; color: #1A1830; font-weight: 500; padding-top: 6px; }
 
       /* ── composer ───────────────────────────────────────────── */
       #composer {
@@ -141,7 +149,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="15"
+      data-duration="13.5"
       data-width="1080"
       data-height="1920"
     >
@@ -168,7 +176,7 @@
       <!-- conversation -->
       <div id="thread">
         <div class="row me" id="rowme">
-          <div class="bubble me" id="bubbleme">Can u create a viral script?</div>
+          <div class="bubble me" id="bubbleme">Can u give me 10 viral hooks</div>
         </div>
 
         <div class="row bot" id="rowtyping">
@@ -199,22 +207,50 @@
 
         <div id="card">
           <div id="cardhead">
-            <div id="cardtitle">VIRAL SCRIPT</div>
-            <div id="cardmeta">in your voice · 28s</div>
+            <div id="cardtitle">10 VIRAL HOOKS</div>
+            <div id="cardmeta">in your voice</div>
           </div>
           <div id="cardbody">
-            <div class="sec" id="sec1">
-              <div class="seclabel">HOOK</div>
-              <div class="sectext">Stop posting three times a day. It's the reason you're stuck at <b>900 followers</b>.</div>
+            <div class="sec hookrow">
+              <div class="hooknum">1</div>
+              <div class="hooktext">Stop posting 3x a day. It's why you're stuck.</div>
             </div>
-            <div class="sec" id="sec2">
-              <div class="seclabel">BODY</div>
-              <div class="sectext">Every post you write from scratch is a coin flip. The creators winning aren't posting more — they're studying what <b>already won</b>, then rebuilding it in their own voice.</div>
+            <div class="sec hookrow">
+              <div class="hooknum">2</div>
+              <div class="hooktext">Your best video already exists. Someone else made it.</div>
             </div>
-            <div class="sec" id="sec3">
-              <div class="seclabel">CTA</div>
-              <div class="sectext">Paste your competitor's channel. Steal the <b>pattern</b>, not the post.<span id="cursor"></span></div>
+            <div class="sec hookrow">
+              <div class="hooknum">3</div>
+              <div class="hooktext">I stole my competitor's format. 14X the views.</div>
             </div>
+            <div class="sec hookrow">
+              <div class="hooknum">4</div>
+              <div class="hooktext">Nobody cares about your niche. They care about this.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">5</div>
+              <div class="hooktext">900 followers to 97K. Same person, different input.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">6</div>
+              <div class="hooktext">The algorithm isn't the problem. Your first line is.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">7</div>
+              <div class="hooktext">I let an AI watch my old videos. Then this happened.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">8</div>
+              <div class="hooktext">Delete your content calendar. Do this instead.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">9</div>
+              <div class="hooktext">Every viral video shares the same 7 seconds.</div>
+            </div>
+            <div class="sec hookrow">
+              <div class="hooknum">10</div>
+              <div class="hooktext">You're not out of ideas. You're out of patterns.</div>
+            <span id="cursor"></span></div>
           </div>
         </div>
       </div>
@@ -235,7 +271,7 @@
 
     <script>
       (function () {
-        const ASK = "Can u create a viral script?";
+        const ASK = "Can u give me 10 viral hooks";
 
         const draft = document.getElementById("draft");
         const chars = [];
@@ -246,7 +282,7 @@
           chars.push(s);
         }
         const dots = document.querySelectorAll("#typing span");
-        const secs = ["#sec1", "#sec2", "#sec3"];
+        const secs = gsap.utils.toArray(".sec");
 
         const TYPE_START = 0.65;
         const TYPE_STEP = 0.052;
@@ -314,10 +350,10 @@
         tl.fromTo("#card", { scale: 0.86, y: 46 },
                            { scale: 1, y: 0, duration: 0.5, ease: "power3.out" }, CARD);
         tl.fromTo(secs, { opacity: 0, y: 26 },
-                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.5, ease: "power3.out" }, LINES);
+                        { opacity: 1, y: 0, duration: 0.45, stagger: 0.55, ease: "power3.out" }, LINES);
 
         // the generation caret blinks a few finite times, then rests
-        const CUR = LINES + 3.3;
+        const CUR = LINES + 5.45;
         tl.to("#cursor", { opacity: 1, duration: 0.01, ease: "none" }, CUR);
         for (let b = 0; b < 4; b++) {
           tl.to("#cursor", { opacity: 0, duration: 0.01, ease: "none" }, CUR + 0.42 + b * 0.84);

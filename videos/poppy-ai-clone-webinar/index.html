@@ -99,15 +99,15 @@
       }
       #cardtitle { font-size: 30px; font-weight: 700; letter-spacing: 0.1em; color: #5B51C7; }
       #cardmeta { margin-left: auto; font-size: 26px; font-weight: 600; color: #6E6A85; }
-      #cardbody { padding: 34px 40px 40px; }
+      #cardbody { padding: 28px 36px 32px; }
 
-      .sec { margin-bottom: 30px; }
+      .sec { margin-bottom: 22px; }
       .sec:last-child { margin-bottom: 0; }
       .seclabel {
         display: inline-block; font-size: 24px; font-weight: 700; letter-spacing: 0.12em;
         color: #FFFFFF; background: #5B51C7; border-radius: 14px; padding: 8px 16px; margin-bottom: 14px;
       }
-      .sectext { font-size: 38px; line-height: 1.38; letter-spacing: -0.01em; color: #1A1830; font-weight: 500; }
+      .sectext { font-size: 34px; line-height: 1.38; letter-spacing: -0.01em; color: #1A1830; font-weight: 500; }
       .sectext b { font-weight: 800; color: #5B51C7; }
       #cursor {
         display: inline-block; width: 5px; height: 40px; background: #5B51C7;
@@ -141,7 +141,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="15"
+      data-duration="13.3"
       data-width="1080"
       data-height="1920"
     >
@@ -168,7 +168,7 @@
       <!-- conversation -->
       <div id="thread">
         <div class="row me" id="rowme">
-          <div class="bubble me" id="bubbleme">Can u create a viral script?</div>
+          <div class="bubble me" id="bubbleme">Can u help me with my Webinar?</div>
         </div>
 
         <div class="row bot" id="rowtyping">
@@ -199,22 +199,30 @@
 
         <div id="card">
           <div id="cardhead">
-            <div id="cardtitle">VIRAL SCRIPT</div>
-            <div id="cardmeta">in your voice · 28s</div>
+            <div id="cardtitle">WEBINAR BLUEPRINT</div>
+            <div id="cardmeta">60 min &middot; your voice</div>
           </div>
           <div id="cardbody">
-            <div class="sec" id="sec1">
-              <div class="seclabel">HOOK</div>
-              <div class="sectext">Stop posting three times a day. It's the reason you're stuck at <b>900 followers</b>.</div>
+            <div class="sec">
+              <div class="seclabel">0&ndash;5 MIN &middot; PROMISE</div>
+              <div class="sectext">Name the outcome and how long it takes.</div>
             </div>
-            <div class="sec" id="sec2">
-              <div class="seclabel">BODY</div>
-              <div class="sectext">Every post you write from scratch is a coin flip. The creators winning aren't posting more — they're studying what <b>already won</b>, then rebuilding it in their own voice.</div>
+            <div class="sec">
+              <div class="seclabel">5&ndash;15 &middot; STORY</div>
+              <div class="sectext">Your before. The moment it changed.</div>
             </div>
-            <div class="sec" id="sec3">
-              <div class="seclabel">CTA</div>
-              <div class="sectext">Paste your competitor's channel. Steal the <b>pattern</b>, not the post.<span id="cursor"></span></div>
+            <div class="sec">
+              <div class="seclabel">15&ndash;40 &middot; TEACH</div>
+              <div class="sectext">Three shifts they can use <b>tonight</b>.</div>
             </div>
+            <div class="sec">
+              <div class="seclabel">40&ndash;50 &middot; OFFER</div>
+              <div class="sectext">The stack, the price, the guarantee.</div>
+            </div>
+            <div class="sec">
+              <div class="seclabel">50&ndash;60 &middot; Q&amp;A</div>
+              <div class="sectext">Handle the objections you know are coming.</div>
+            <span id="cursor"></span></div>
           </div>
         </div>
       </div>
@@ -235,7 +243,7 @@
 
     <script>
       (function () {
-        const ASK = "Can u create a viral script?";
+        const ASK = "Can u help me with my Webinar?";
 
         const draft = document.getElementById("draft");
         const chars = [];
@@ -246,7 +254,7 @@
           chars.push(s);
         }
         const dots = document.querySelectorAll("#typing span");
-        const secs = ["#sec1", "#sec2", "#sec3"];
+        const secs = gsap.utils.toArray(".sec");
 
         const TYPE_START = 0.65;
         const TYPE_STEP = 0.052;
@@ -314,10 +322,10 @@
         tl.fromTo("#card", { scale: 0.86, y: 46 },
                            { scale: 1, y: 0, duration: 0.5, ease: "power3.out" }, CARD);
         tl.fromTo(secs, { opacity: 0, y: 26 },
-                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.5, ease: "power3.out" }, LINES);
+                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.1, ease: "power3.out" }, LINES);
 
         // the generation caret blinks a few finite times, then rests
-        const CUR = LINES + 3.3;
+        const CUR = LINES + 4.9;
         tl.to("#cursor", { opacity: 1, duration: 0.01, ease: "none" }, CUR);
         for (let b = 0; b < 4; b++) {
           tl.to("#cursor", { opacity: 0, duration: 0.01, ease: "none" }, CUR + 0.42 + b * 0.84);

@@ -141,7 +141,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="15"
+      data-duration="13.1"
       data-width="1080"
       data-height="1920"
     >
@@ -168,7 +168,7 @@
       <!-- conversation -->
       <div id="thread">
         <div class="row me" id="rowme">
-          <div class="bubble me" id="bubbleme">Can u create a viral script?</div>
+          <div class="bubble me" id="bubbleme">Can u do me a VSL Framework</div>
         </div>
 
         <div class="row bot" id="rowtyping">
@@ -199,22 +199,30 @@
 
         <div id="card">
           <div id="cardhead">
-            <div id="cardtitle">VIRAL SCRIPT</div>
-            <div id="cardmeta">in your voice · 28s</div>
+            <div id="cardtitle">VSL FRAMEWORK</div>
+            <div id="cardmeta">6 beats &middot; your voice</div>
           </div>
           <div id="cardbody">
-            <div class="sec" id="sec1">
+            <div class="sec" id="sec5">
               <div class="seclabel">HOOK</div>
-              <div class="sectext">Stop posting three times a day. It's the reason you're stuck at <b>900 followers</b>.</div>
+              <div class="sectext">One line that stops the scroll and names their exact pain.</div>
             </div>
-            <div class="sec" id="sec2">
-              <div class="seclabel">BODY</div>
-              <div class="sectext">Every post you write from scratch is a coin flip. The creators winning aren't posting more — they're studying what <b>already won</b>, then rebuilding it in their own voice.</div>
+            <div class="sec">
+              <div class="seclabel">PROBLEM</div>
+              <div class="sectext">Why everything they tried kept failing &mdash; and it wasn't their fault.</div>
             </div>
-            <div class="sec" id="sec3">
-              <div class="seclabel">CTA</div>
-              <div class="sectext">Paste your competitor's channel. Steal the <b>pattern</b>, not the post.<span id="cursor"></span></div>
+            <div class="sec">
+              <div class="seclabel">MECHANISM</div>
+              <div class="sectext">The new way. Show them the thing they've <b>never seen</b> before.</div>
             </div>
+            <div class="sec">
+              <div class="seclabel">PROOF</div>
+              <div class="sectext">Receipts. Numbers, screenshots, names, dates.</div>
+            </div>
+            <div class="sec">
+              <div class="seclabel">OFFER</div>
+              <div class="sectext">What they get, what it costs, and why <b>now</b>.</div>
+            <span id="cursor"></span></div>
           </div>
         </div>
       </div>
@@ -235,7 +243,7 @@
 
     <script>
       (function () {
-        const ASK = "Can u create a viral script?";
+        const ASK = "Can u do me a VSL Framework";
 
         const draft = document.getElementById("draft");
         const chars = [];
@@ -246,7 +254,7 @@
           chars.push(s);
         }
         const dots = document.querySelectorAll("#typing span");
-        const secs = ["#sec1", "#sec2", "#sec3"];
+        const secs = gsap.utils.toArray(".sec");
 
         const TYPE_START = 0.65;
         const TYPE_STEP = 0.052;
@@ -314,10 +322,10 @@
         tl.fromTo("#card", { scale: 0.86, y: 46 },
                            { scale: 1, y: 0, duration: 0.5, ease: "power3.out" }, CARD);
         tl.fromTo(secs, { opacity: 0, y: 26 },
-                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.5, ease: "power3.out" }, LINES);
+                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.1, ease: "power3.out" }, LINES);
 
         // the generation caret blinks a few finite times, then rests
-        const CUR = LINES + 3.3;
+        const CUR = LINES + 4.9;
         tl.to("#cursor", { opacity: 1, duration: 0.01, ease: "none" }, CUR);
         for (let b = 0; b < 4; b++) {
           tl.to("#cursor", { opacity: 0, duration: 0.01, ease: "none" }, CUR + 0.42 + b * 0.84);
