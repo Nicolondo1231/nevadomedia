@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #FBFAFF; }
+
+      #root {
+        width: 100%; height: 100%; position: relative; overflow: hidden;
+        background: #FBFAFF;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        color: #1A1830;
+      }
+
+      /* soft purple ambience, top and bottom */
+      #glowtop {
+        position: absolute; top: -280px; left: 50%; margin-left: -520px;
+        width: 1040px; height: 700px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(127,120,235,0.22), rgba(127,120,235,0) 66%);
+      }
+
+      /* ── header ─────────────────────────────────────────────── */
+      #header {
+        position: absolute; top: 0; left: 0; right: 0; height: 268px;
+        background: rgba(255,255,255,0.92);
+        border-bottom: 2px solid #EDEBFA;
+        display: flex; align-items: center; gap: 30px; padding: 0 56px;
+      }
+      #logo {
+        width: 116px; height: 116px; border-radius: 34px; flex: none;
+        background: linear-gradient(145deg, #7F78EB 0%, #5B51C7 100%);
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 12px 30px rgba(91,81,199,0.32);
+      }
+      #titleblock { flex: 1; }
+      #title {
+        font-size: 52px; font-weight: 700; letter-spacing: -0.02em; color: #1A1830;
+      }
+      #subtitle {
+        display: flex; align-items: center; gap: 14px;
+        font-size: 30px; font-weight: 500; color: #6E6A85; margin-top: 8px;
+      }
+      #livedot { width: 18px; height: 18px; border-radius: 50%; background: #2FBF71; display: block; }
+      #menu { display: flex; flex-direction: column; gap: 10px; flex: none; padding-right: 6px; }
+      #menu i { width: 10px; height: 10px; border-radius: 50%; background: #C6C2DC; display: block; }
+
+      /* ── thread ─────────────────────────────────────────────── */
+      #thread {
+        position: absolute; left: 0; right: 0; top: 268px; bottom: 236px;
+        padding: 44px 48px 0; display: flex; flex-direction: column; gap: 30px;
+      }
+
+      .row { display: flex; width: 100%; }
+      .row.me { justify-content: flex-end; }
+      .row.bot { justify-content: flex-start; align-items: flex-end; gap: 20px; }
+
+      .botface {
+        width: 72px; height: 72px; border-radius: 22px; flex: none;
+        background: linear-gradient(145deg, #7F78EB 0%, #5B51C7 100%);
+        display: flex; align-items: center; justify-content: center;
+      }
+
+      .bubble {
+        max-width: 76%; font-size: 42px; line-height: 1.34; letter-spacing: -0.01em;
+        padding: 28px 38px; border-radius: 36px;
+      }
+      .bubble.me {
+        background: #5B51C7; color: #FFFFFF; font-weight: 500;
+        border-bottom-right-radius: 12px; transform-origin: 100% 100%;
+        box-shadow: 0 10px 26px rgba(91,81,199,0.26);
+      }
+      .bubble.bot {
+        background: #FFFFFF; color: #1A1830; font-weight: 500;
+        border: 2px solid #EDEBFA; border-bottom-left-radius: 12px;
+        transform-origin: 0% 100%; box-shadow: 0 8px 22px rgba(26,24,48,0.06);
+      }
+
+      #typing {
+        display: flex; align-items: center; gap: 16px;
+        background: #FFFFFF; border: 2px solid #EDEBFA; border-radius: 36px;
+        border-bottom-left-radius: 12px; padding: 34px 40px;
+        transform-origin: 0% 100%; box-shadow: 0 8px 22px rgba(26,24,48,0.06);
+      }
+      #typing span { width: 20px; height: 20px; border-radius: 50%; background: #A29DC4; display: block; }
+
+      /* ── the generated script card ──────────────────────────── */
+      #card {
+        margin-left: 92px; background: #FFFFFF; border: 2px solid #EDEBFA;
+        border-radius: 40px; overflow: hidden; transform-origin: 0% 0%;
+        box-shadow: 0 18px 46px rgba(26,24,48,0.10);
+      }
+      #cardhead {
+        background: #F3F1FE; border-bottom: 2px solid #EDEBFA;
+        padding: 26px 36px; display: flex; align-items: center; gap: 16px;
+      }
+      #cardtitle { font-size: 30px; font-weight: 700; letter-spacing: 0.1em; color: #5B51C7; }
+      #cardmeta { margin-left: auto; font-size: 26px; font-weight: 600; color: #6E6A85; }
+      #cardbody { padding: 34px 40px 40px; }
+
+      .sec { margin-bottom: 30px; }
+      .sec:last-child { margin-bottom: 0; }
+      .seclabel {
+        display: inline-block; font-size: 24px; font-weight: 700; letter-spacing: 0.12em;
+        color: #FFFFFF; background: #7F78EB; border-radius: 14px; padding: 8px 16px; margin-bottom: 14px;
+      }
+      .sectext { font-size: 38px; line-height: 1.38; letter-spacing: -0.01em; color: #1A1830; font-weight: 500; }
+      .sectext b { font-weight: 800; color: #5B51C7; }
+      #cursor {
+        display: inline-block; width: 5px; height: 40px; background: #5B51C7;
+        vertical-align: -6px; margin-left: 4px;
+      }
+
+      /* ── composer ───────────────────────────────────────────── */
+      #composer {
+        position: absolute; left: 0; right: 0; bottom: 0; min-height: 236px;
+        background: rgba(255,255,255,0.94); border-top: 2px solid #EDEBFA;
+        padding: 36px 48px 74px; display: flex; align-items: flex-end; gap: 22px;
+      }
+      #inputwrap {
+        flex: 1; min-height: 96px; background: #F5F4FD; border: 2px solid #E7E4F8;
+        border-radius: 48px; padding: 24px 34px; display: flex; align-items: center;
+      }
+      #inputline { font-size: 38px; line-height: 1.26; color: #1A1830; font-weight: 500; }
+      #placeholder { color: #8480A0; }
+      #caret { display: inline-block; width: 4px; height: 42px; background: #5B51C7;
+               vertical-align: -7px; margin-left: 3px; }
+      #sendbtn {
+        width: 96px; height: 96px; border-radius: 48px; flex: none;
+        background: linear-gradient(145deg, #7F78EB 0%, #5B51C7 100%);
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 24px rgba(91,81,199,0.34);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="15"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="glowtop"></div>
+
+      <!-- header: Poppy mark + product name -->
+      <div id="header">
+        <div id="logo">
+          <svg width="66" height="66" viewBox="0 0 40 40" aria-hidden="true">
+            <circle cx="20" cy="10.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+            <circle cx="29.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+            <circle cx="20" cy="29.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+            <circle cx="10.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+            <circle cx="20" cy="20" r="5.4" fill="#5B51C7"></circle>
+          </svg>
+        </div>
+        <div id="titleblock">
+          <div id="title">AI Clone chatbot</div>
+          <div id="subtitle"><span id="livedot"></span><span>trained on your voice</span></div>
+        </div>
+        <div id="menu"><i></i><i></i><i></i></div>
+      </div>
+
+      <!-- conversation -->
+      <div id="thread">
+        <div class="row me" id="rowme">
+          <div class="bubble me" id="bubbleme">Can u create a viral script?</div>
+        </div>
+
+        <div class="row bot" id="rowtyping">
+          <div class="botface">
+            <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true">
+              <circle cx="20" cy="10.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+              <circle cx="29.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+              <circle cx="20" cy="29.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+              <circle cx="10.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+              <circle cx="20" cy="20" r="5.4" fill="#5B51C7"></circle>
+            </svg>
+          </div>
+          <div id="typing"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="row bot" id="rowbot">
+          <div class="botface">
+            <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true">
+              <circle cx="20" cy="10.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+              <circle cx="29.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+              <circle cx="20" cy="29.5" r="8.2" fill="#FFFFFF" fill-opacity="0.96"></circle>
+              <circle cx="10.5" cy="20" r="8.2" fill="#FFFFFF" fill-opacity="0.84"></circle>
+              <circle cx="20" cy="20" r="5.4" fill="#5B51C7"></circle>
+            </svg>
+          </div>
+          <div class="bubble bot" id="bubblebot">Sure! Here you go:</div>
+        </div>
+
+        <div id="card">
+          <div id="cardhead">
+            <div id="cardtitle">VIRAL SCRIPT</div>
+            <div id="cardmeta">in your voice · 28s</div>
+          </div>
+          <div id="cardbody">
+            <div class="sec" id="sec1">
+              <div class="seclabel">HOOK</div>
+              <div class="sectext">Stop posting three times a day. It's the reason you're stuck at <b>900 followers</b>.</div>
+            </div>
+            <div class="sec" id="sec2">
+              <div class="seclabel">BODY</div>
+              <div class="sectext">Every post you write from scratch is a coin flip. The creators winning aren't posting more — they're studying what <b>already won</b>, then rebuilding it in their own voice.</div>
+            </div>
+            <div class="sec" id="sec3">
+              <div class="seclabel">CTA</div>
+              <div class="sectext">Paste your competitor's channel. Steal the <b>pattern</b>, not the post.<span id="cursor"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- composer -->
+      <div id="composer">
+        <div id="inputwrap">
+          <div id="inputline"><span id="placeholder">Ask your clone anything…</span><span id="draft"></span><span id="caret"></span></div>
+        </div>
+        <div id="sendbtn">
+          <svg width="44" height="44" viewBox="0 0 22 22" aria-hidden="true">
+            <path d="M11 18V5M5 11l6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6"
+                  stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const ASK = "Can u create a viral script?";
+
+        const draft = document.getElementById("draft");
+        const chars = [];
+        for (const ch of ASK) {
+          const s = document.createElement("span");
+          s.textContent = ch;
+          draft.appendChild(s);
+          chars.push(s);
+        }
+        const dots = document.querySelectorAll("#typing span");
+        const secs = ["#sec1", "#sec2", "#sec3"];
+
+        const TYPE_START = 0.65;
+        const TYPE_STEP = 0.052;
+        const SEND = TYPE_START + chars.length * TYPE_STEP + 0.28; // ~2.4s
+        const DOTS = SEND + 0.55;
+        const REPLY = DOTS + 1.5;
+        const CARD = REPLY + 0.55;
+        const LINES = CARD + 0.45;
+
+        const tl = gsap.timeline({ paused: true });
+
+        // resting state — applied immediately, so frame 0 renders it too
+        gsap.set(["#rowme", "#rowtyping", "#rowbot", "#card"], { opacity: 0 });
+        gsap.set(secs, { opacity: 0 });
+        gsap.set("#cursor", { opacity: 0 });
+        gsap.set(chars, { opacity: 0 });
+        gsap.set("#draft", { display: "inline" });
+        gsap.set("#caret", { opacity: 0 });
+        gsap.set("#sendbtn", { opacity: 0.4, scale: 0.9 });
+
+        // 1 — the app settles in
+        tl.fromTo("#root", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
+        tl.fromTo("#logo", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+        tl.fromTo(["#title", "#subtitle"], { opacity: 0, x: -24 },
+                  { opacity: 1, x: 0, duration: 0.42, stagger: 0.08, ease: "power3.out" }, 0.22);
+
+        // 2 — the question types into the composer
+        tl.to("#caret", { opacity: 1, duration: 0.01, ease: "none" }, TYPE_START - 0.1);
+        tl.to("#placeholder", { opacity: 0, duration: 0.01, ease: "none" }, TYPE_START);
+        tl.to(chars, { opacity: 1, duration: 0.01, stagger: TYPE_STEP, ease: "none" }, TYPE_START);
+        tl.to("#sendbtn", { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }, TYPE_START + 0.06);
+
+        // 3 — send
+        tl.to("#sendbtn", { scale: 0.86, duration: 0.1, ease: "power2.out" }, SEND - 0.12);
+        tl.to("#sendbtn", { scale: 1, duration: 0.28, ease: "power3.out" }, SEND - 0.02);
+        tl.to("#caret", { opacity: 0, duration: 0.01, ease: "none" }, SEND - 0.02);
+        tl.to(chars, { opacity: 0, duration: 0.1, ease: "power2.in" }, SEND - 0.02);
+        tl.set("#draft", { display: "none" }, SEND + 0.06);
+        tl.to("#placeholder", { opacity: 1, duration: 0.22, ease: "power2.out" }, SEND + 0.12);
+        tl.to("#sendbtn", { opacity: 0.4, scale: 0.9, duration: 0.26, ease: "power2.out" }, SEND + 0.14);
+
+        tl.to("#rowme", { opacity: 1, duration: 0.01, ease: "none" }, SEND);
+        tl.fromTo("#bubbleme", { scale: 0.5, y: 70 },
+                               { scale: 1, y: 0, duration: 0.44, ease: "power3.out" }, SEND);
+
+        // 4 — the clone thinks: three finite pulses, no repeat/yoyo
+        tl.to("#rowtyping", { opacity: 1, duration: 0.01, ease: "none" }, DOTS);
+        tl.fromTo("#typing", { scale: 0.5, y: 34 },
+                             { scale: 1, y: 0, duration: 0.32, ease: "power3.out" }, DOTS);
+        for (let p = 0; p < 3; p++) {
+          const at = DOTS + 0.32 + p * 0.38;
+          tl.to(dots, { y: -12, opacity: 1, duration: 0.15, stagger: 0.09, ease: "power2.out" }, at);
+          tl.to(dots, { y: 0, opacity: 0.5, duration: 0.19, stagger: 0.09, ease: "power2.in" }, at + 0.15);
+        }
+        tl.to("#typing", { scale: 0.5, opacity: 0, duration: 0.18, ease: "power2.in" }, REPLY - 0.18);
+        tl.set("#rowtyping", { height: 0, opacity: 0 }, REPLY - 0.01);
+
+        // 5 — "Sure! Here you go:"
+        tl.to("#rowbot", { opacity: 1, duration: 0.01, ease: "none" }, REPLY);
+        tl.fromTo("#bubblebot", { scale: 0.5, y: 40 },
+                                { scale: 1, y: 0, duration: 0.42, ease: "power3.out" }, REPLY);
+
+        // 6 — the script card opens, then generates section by section
+        tl.to("#card", { opacity: 1, duration: 0.01, ease: "none" }, CARD);
+        tl.fromTo("#card", { scale: 0.86, y: 46 },
+                           { scale: 1, y: 0, duration: 0.5, ease: "power3.out" }, CARD);
+        tl.fromTo(secs, { opacity: 0, y: 26 },
+                        { opacity: 1, y: 0, duration: 0.45, stagger: 1.5, ease: "power3.out" }, LINES);
+
+        // the generation caret blinks a few finite times, then rests
+        const CUR = LINES + 3.3;
+        tl.to("#cursor", { opacity: 1, duration: 0.01, ease: "none" }, CUR);
+        for (let b = 0; b < 4; b++) {
+          tl.to("#cursor", { opacity: 0, duration: 0.01, ease: "none" }, CUR + 0.42 + b * 0.84);
+          tl.to("#cursor", { opacity: 1, duration: 0.01, ease: "none" }, CUR + 0.84 + b * 0.84);
+        }
+        tl.to("#cursor", { opacity: 0, duration: 0.01, ease: "none" }, CUR + 3.9);
+
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>
