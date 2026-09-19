@@ -76,6 +76,18 @@ const stream = await poppy.chat(conversationId, userMessage, {
 `streaming`, `includeUsage`, `additionalContext`, `saveHistory` (chat only),
 `metadata`, plus `boardId` / `chatId` to target a different Chat Node.
 
+## Behind a proxy
+
+Node's built-in `fetch` ignores `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` is
+set at startup, so in a sandbox or corporate network every request fails with a
+denial that looks like an auth error. The CLI detects `HTTPS_PROXY` and re-runs
+itself once with the variable set, so it just works. If you use the library
+directly in such an environment, start your program with it:
+
+```sh
+NODE_USE_ENV_PROXY=1 node your-script.js
+```
+
 ## Notes
 
 - Every call spends Poppy credits. Non-streaming responses carry

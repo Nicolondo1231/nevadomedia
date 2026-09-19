@@ -16,7 +16,24 @@
  *        --board <id> --chat <id> (override the configured ids)
  */
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { PoppyClient, PoppyError } from './poppy.js';
+
+// Node's built-in fetch ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY is set,
+// so behind a proxy every request fails with a confusing denial. Node reads
+// that variable at startup, not at first fetch, so setting it on process.env
+// here would be too late — re-run ourselves once with it set instead. No-op on
+// a normal machine, where HTTPS_PROXY isn't set.
+if (process.env.HTTPS_PROXY && process.env.NODE_USE_ENV_PROXY !== '1') {
+  const { status } = spawnSync(
+    process.execPath,
+    // The proxy agent is flagged experimental; mute that one warning only.
+    ['--disable-warning=UNDICI-EHPA', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+    { stdio: 'inherit', env: { ...process.env, NODE_USE_ENV_PROXY: '1' } },
+  );
+  process.exit(status ?? 1);
+}
 
 /** Load .env into process.env without a dependency. Real env vars win. */
 function loadDotenv(path = '.env') {
