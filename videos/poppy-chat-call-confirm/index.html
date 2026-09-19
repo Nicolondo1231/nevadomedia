@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+
+      #root {
+        width: 100%; height: 100%; position: relative; overflow: hidden;
+        background: #FFFFFF;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        color: #000;
+      }
+
+      /* ── status bar ─────────────────────────────────────────── */
+      #status {
+        position: absolute; top: 0; left: 0; right: 0; height: 132px;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 30px 74px 0;
+      }
+      #clock { font-size: 48px; font-weight: 600; letter-spacing: -0.02em; }
+      #sysicons { display: flex; align-items: center; gap: 16px; }
+      #sysicons svg { display: block; }
+
+      /* ── nav bar ────────────────────────────────────────────── */
+      #nav {
+        position: absolute; top: 132px; left: 0; right: 0; height: 268px;
+        background: rgba(249, 249, 249, 0.94);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.16);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      #back {
+        position: absolute; left: 44px; top: 50%; margin-top: -32px;
+        display: flex; align-items: center; gap: 8px;
+      }
+      #badge {
+        min-width: 56px; height: 56px; border-radius: 28px; background: #0B84FF;
+        color: #fff; font-size: 30px; font-weight: 600; padding: 0 16px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #avatar {
+        width: 138px; height: 138px; border-radius: 50%;
+        background: linear-gradient(180deg, #8A8A8F 0%, #6E6E73 100%);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 62px; font-weight: 400; letter-spacing: 0.01em;
+      }
+      #contact {
+        margin-top: 12px; display: flex; align-items: center; gap: 10px;
+        font-size: 38px; font-weight: 400; letter-spacing: -0.01em;
+      }
+      #contact svg { display: block; }
+
+      /* ── thread ─────────────────────────────────────────────── */
+      #thread {
+        position: absolute; left: 0; right: 0; top: 400px; bottom: 330px;
+        padding: 40px 48px 0;
+        display: flex; flex-direction: column; justify-content: flex-end; gap: 0;
+      }
+
+      #daystamp {
+        text-align: center; font-size: 30px; font-weight: 600;
+        color: rgba(60, 60, 67, 0.6); margin-bottom: 40px;
+      }
+      #daystamp b { color: rgba(60, 60, 67, 0.6); font-weight: 600; }
+
+      .row { display: flex; width: 100%; }
+      .row.out { justify-content: flex-end; }
+      .row.in { justify-content: flex-start; }
+
+      .bubble {
+        position: relative; max-width: 78%;
+        font-size: 47px; line-height: 1.3; letter-spacing: -0.015em;
+        padding: 28px 40px; border-radius: 55px;
+      }
+      .bubble.out { background: #0B84FF; color: #FFFFFF; transform-origin: 100% 100%; }
+      .bubble.in  { background: #E9E9EB; color: #000000; transform-origin: 0% 100%; }
+
+      /* iOS bubble tails */
+      .bubble.out::before {
+        content: ""; position: absolute; z-index: 0; bottom: 0; right: -22px;
+        width: 55px; height: 69px; background: #0B84FF;
+        border-bottom-left-radius: 44px 39px;
+      }
+      .bubble.out::after {
+        content: ""; position: absolute; z-index: 1; bottom: 0; right: -70px;
+        width: 72px; height: 69px; background: #FFFFFF;
+        border-bottom-left-radius: 28px;
+      }
+      .bubble.in::before {
+        content: ""; position: absolute; z-index: 0; bottom: 0; left: -22px;
+        width: 55px; height: 69px; background: #E9E9EB;
+        border-bottom-right-radius: 44px 39px;
+      }
+      .bubble.in::after {
+        content: ""; position: absolute; z-index: 1; bottom: 0; left: -70px;
+        width: 72px; height: 69px; background: #FFFFFF;
+        border-bottom-right-radius: 28px;
+      }
+
+      #delivered {
+        align-self: flex-end; font-size: 27px; letter-spacing: 0.01em;
+        color: rgba(60, 60, 67, 0.6); margin-top: 14px; padding-right: 8px;
+      }
+
+      #rowtyping { margin-top: 34px; }
+      #typing {
+        position: relative; background: #E9E9EB; border-radius: 55px;
+        padding: 36px 44px; display: flex; align-items: center; gap: 20px;
+        transform-origin: 0% 100%;
+      }
+      #typing i { width: 010px; height: 30px; display: block; }
+      #typing span { width: 30px; height: 30px; border-radius: 50%; background: #8E8E93; display: block; }
+      #typing::before {
+        content: ""; position: absolute; z-index: 0; bottom: 0; left: -22px;
+        width: 55px; height: 69px; background: #E9E9EB;
+        border-bottom-right-radius: 44px 39px;
+      }
+      #typing::after {
+        content: ""; position: absolute; z-index: 1; bottom: 0; left: -70px;
+        width: 72px; height: 69px; background: #FFFFFF;
+        border-bottom-right-radius: 28px;
+      }
+
+      #rowin { margin-top: 34px; }
+
+      /* ── composer ───────────────────────────────────────────── */
+      /* like iOS, the composer grows upward as the message gets longer */
+      #composer {
+        position: absolute; left: 0; right: 0; bottom: 0; min-height: 330px;
+        background: rgba(249, 249, 249, 0.94);
+        border-top: 1px solid rgba(0, 0, 0, 0.16);
+        padding: 34px 44px 108px;
+        display: flex; align-items: flex-end; gap: 26px;
+      }
+      #plus {
+        width: 82px; height: 82px; border-radius: 41px; background: #E4E4E6;
+        display: flex; align-items: center; justify-content: center; flex: none;
+      }
+      #inputwrap {
+        flex: 1; min-height: 82px; border: 2px solid rgba(0, 0, 0, 0.16);
+        border-radius: 41px; padding: 16px 30px;
+        display: flex; align-items: center;
+      }
+      #inputline {
+        font-size: 40px; line-height: 1.28; letter-spacing: -0.01em; color: #000;
+        word-break: break-word;
+      }
+      #placeholder { color: rgba(60, 60, 67, 0.62); }
+      #caret {
+        display: inline-block; width: 4px; height: 44px; background: #0B84FF;
+        vertical-align: -8px; margin-left: 2px;
+      }
+      #send {
+        width: 82px; height: 82px; border-radius: 41px; background: #0B84FF;
+        display: flex; align-items: center; justify-content: center; flex: none;
+      }
+      #home {
+        position: absolute; bottom: 22px; left: 50%; width: 396px; height: 11px;
+        margin-left: -198px; border-radius: 6px; background: #000; opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="8"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- status bar -->
+      <div id="status">
+        <div id="clock">9:41</div>
+        <div id="sysicons">
+          <svg width="52" height="36" viewBox="0 0 26 18" aria-hidden="true">
+            <rect x="0" y="11" width="4" height="6" rx="1.2" fill="#000"></rect>
+            <rect x="6" y="8" width="4" height="9" rx="1.2" fill="#000"></rect>
+            <rect x="12" y="4" width="4" height="13" rx="1.2" fill="#000"></rect>
+            <rect x="18" y="0" width="4" height="17" rx="1.2" fill="#000"></rect>
+          </svg>
+          <svg width="46" height="36" viewBox="0 0 22 16" aria-hidden="true">
+            <path d="M11 13.6a1.9 1.9 0 110 .01zM6.6 9.6a6.6 6.6 0 018.8 0l-1.6 1.7a4.2 4.2 0 00-5.6 0zM3 6.2a11.4 11.4 0 0116 0l-1.6 1.7a9 9 0 00-12.8 0z" fill="#000"></path>
+          </svg>
+          <svg width="66" height="34" viewBox="0 0 33 17" aria-hidden="true">
+            <rect x="0.7" y="0.7" width="27" height="15.6" rx="5" fill="none" stroke="#000" stroke-opacity="0.38" stroke-width="1.4"></rect>
+            <rect x="2.6" y="2.6" width="23.2" height="11.8" rx="3.4" fill="#000"></rect>
+            <path d="M29.6 5.6v5.8a3.1 3.1 0 000-5.8z" fill="#000" fill-opacity="0.38"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- nav bar -->
+      <div id="nav">
+        <div id="back">
+          <svg width="30" height="52" viewBox="0 0 15 26" aria-hidden="true">
+            <path d="M13 1.6L2 13l11 11.4" fill="none" stroke="#0B84FF" stroke-width="3.2"
+                  stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <div id="badge">3</div>
+        </div>
+        <div id="avatar">R</div>
+        <div id="contact">
+          <span>Rebbeca</span>
+          <svg width="20" height="26" viewBox="0 0 10 13" aria-hidden="true">
+            <path d="M1.4 1.4L7 6.5l-5.6 5.1" fill="none" stroke="rgba(60,60,67,0.45)"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- thread -->
+      <div id="thread">
+        <div id="daystamp">Today <b>9:41 AM</b></div>
+
+        <div class="row out" id="rowout"><div class="bubble out" id="bubbleout"></div></div>
+        <div id="delivered">Delivered</div>
+
+        <div class="row in" id="rowtyping">
+          <div id="typing"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="row in" id="rowin"><div class="bubble in" id="bubblein">yes! Let’s do it</div></div>
+      </div>
+
+      <!-- composer -->
+      <div id="composer">
+        <div id="plus">
+          <svg width="38" height="38" viewBox="0 0 19 19" aria-hidden="true">
+            <path d="M9.5 3v13M3 9.5h13" stroke="rgba(60,60,67,0.7)" stroke-width="2.4" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div id="inputwrap">
+          <div id="inputline"><span id="placeholder">iMessage</span><span id="draft"></span><span id="caret"></span></div>
+        </div>
+        <div id="send">
+          <svg width="40" height="40" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 16.5V4M4.6 9.4L10 3.8l5.4 5.6" fill="none" stroke="#fff"
+                  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div id="home"></div>
+    </div>
+
+    <script>
+      (function () {
+        const MSG =
+          "Hey I saw you booked a call with us tomorrow at 5 pm EST, is it still a good time to chat?";
+
+        // per-character spans so the type-on is deterministic under seek
+        const draft = document.getElementById("draft");
+        const chars = [];
+        for (const ch of MSG) {
+          const s = document.createElement("span");
+          s.textContent = ch;
+          draft.appendChild(s);
+          chars.push(s);
+        }
+        document.getElementById("bubbleout").textContent = MSG;
+        const dots = document.querySelectorAll("#typing span");
+
+        const TYPE_START = 0.65;
+        const TYPE_STEP = 0.0238;
+        const SEND = TYPE_START + chars.length * TYPE_STEP + 0.3; // ~5.1s
+        const DOTS = SEND + 0.85;
+        const REPLY = DOTS + 1.55;
+
+        const tl = gsap.timeline({ paused: true });
+
+        // resting state — an empty thread and an empty composer
+        tl.set(["#rowout", "#delivered", "#rowtyping", "#rowin"], { opacity: 0 }, 0);
+        tl.set(chars, { opacity: 0 }, 0);
+        tl.set("#draft", { display: "inline" }, 0);
+        tl.set("#caret", { opacity: 0 }, 0);
+        tl.set("#send", { opacity: 0.35, scale: 0.9 }, 0);
+
+        // 1 — the screen settles in
+        tl.fromTo("#root", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
+        tl.fromTo("#daystamp", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0.25);
+
+        // 2 — the message types into the composer; the send button wakes on the first character
+        tl.to("#caret", { opacity: 1, duration: 0.01, ease: "none" }, TYPE_START - 0.12);
+        tl.to("#placeholder", { opacity: 0, duration: 0.01, ease: "none" }, TYPE_START);
+        tl.to(chars, { opacity: 1, duration: 0.01, stagger: TYPE_STEP, ease: "none" }, TYPE_START);
+        tl.to("#send", { opacity: 1, scale: 1, duration: 0.28, ease: "power3.out" }, TYPE_START + 0.05);
+
+        // 3 — send: the composer empties and the bubble lands
+        tl.to("#send", { scale: 0.84, duration: 0.1, ease: "power2.out" }, SEND - 0.12);
+        tl.to("#send", { scale: 1, duration: 0.26, ease: "power3.out" }, SEND - 0.02);
+        tl.to("#caret", { opacity: 0, duration: 0.01, ease: "none" }, SEND - 0.02);
+        tl.to(chars, { opacity: 0, duration: 0.1, ease: "power2.in" }, SEND - 0.02);
+        // the sent text leaves the layout too, so the composer collapses back to one line
+        tl.set("#draft", { display: "none" }, SEND + 0.06);
+        tl.to("#placeholder", { opacity: 1, duration: 0.2, ease: "power2.out" }, SEND + 0.12);
+        tl.to("#send", { opacity: 0.35, scale: 0.9, duration: 0.25, ease: "power2.out" }, SEND + 0.12);
+
+        tl.fromTo("#rowout", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, SEND);
+        tl.fromTo("#bubbleout", { scale: 0.42, y: 120 },
+                                { scale: 1, y: 0, duration: 0.46, ease: "power3.out" }, SEND);
+        tl.fromTo("#delivered", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, SEND + 0.55);
+
+        // 4 — Rebbeca is typing: three finite pulses, no repeat/yoyo
+        tl.to("#rowtyping", { opacity: 1, duration: 0.01, ease: "none" }, DOTS);
+        tl.fromTo("#typing", { scale: 0.4, y: 40 },
+                             { scale: 1, y: 0, duration: 0.34, ease: "power3.out" }, DOTS);
+        for (let p = 0; p < 3; p++) {
+          const at = DOTS + 0.36 + p * 0.44;
+          tl.to(dots, { y: -13, opacity: 1, duration: 0.17, stagger: 0.1, ease: "power2.out" }, at);
+          tl.to(dots, { y: 0, opacity: 0.55, duration: 0.21, stagger: 0.1, ease: "power2.in" }, at + 0.17);
+        }
+        tl.to("#typing", { scale: 0.4, opacity: 0, duration: 0.2, ease: "power2.in" }, REPLY - 0.2);
+        tl.set("#rowtyping", { height: 0, marginTop: 0, opacity: 0 }, REPLY - 0.01);
+
+        // 5 — the reply lands
+        tl.to("#rowin", { opacity: 1, duration: 0.01, ease: "none" }, REPLY);
+        tl.fromTo("#bubblein", { scale: 0.42, y: 60 },
+                               { scale: 1, y: 0, duration: 0.44, ease: "power3.out" }, REPLY);
+
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>
