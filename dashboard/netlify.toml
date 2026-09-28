@@ -1,0 +1,30 @@
+# Static hosting only. No functions, no scheduled functions, no background
+# functions — every integration and every cron runs on the Hostinger VPS so
+# this site never consumes build-plugin or function credits.
+
+[build]
+  base    = "dashboard"
+  command = "npm run build"
+  publish = "dashboard/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA routing: every path resolves to index.html.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
+    Permissions-Policy     = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

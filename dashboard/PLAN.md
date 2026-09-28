@@ -1,6 +1,8 @@
 # NevadoMedia BI Dashboard — Build Plan
 
-Status: **awaiting approval of this plan.** No phase started.
+Status: **phase 1 code complete, not yet deployed.** Schema, RLS, auth and the
+deployable shell are built and tested locally. Deployment is blocked on §4.
+Phases 2–14 not started.
 Owner: Sebastian (admin) · Operator: Nico (operations only)
 Branch: `claude/awesome-ramanujan-l0hfh3`
 
