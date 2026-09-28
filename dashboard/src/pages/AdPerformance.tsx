@@ -166,16 +166,12 @@ export function AdPerformance() {
   }, [inRange])
 
   async function refresh() {
-    const workerUrl = import.meta.env.VITE_WORKER_URL
-    if (!workerUrl) {
-      setRefreshNote('No worker URL configured — set VITE_WORKER_URL.')
-      return
-    }
     setRefreshing(true)
     setRefreshNote(null)
     try {
       const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
-      const res = await fetch(`${workerUrl.replace(/\/$/, '')}/refresh?days=30`, {
+      // Same origin as the site: the function runs on Netlify alongside it.
+      const res = await fetch('/api/refresh?days=30', {
         method: 'POST',
         headers: { authorization: `Bearer ${data.session?.access_token ?? ''}` },
       })

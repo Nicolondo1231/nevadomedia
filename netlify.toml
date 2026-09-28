@@ -15,7 +15,20 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# SPA routing: every path resolves to index.html so deep links work.
+# Serverless functions: one scheduled daily Meta sync and one on-demand
+# refresh. A daily cron is ~30 invocations a month against a 125,000 free
+# allowance, so this costs nothing and replaces the separate VPS entirely.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Keep function routes off the SPA catch-all.
+[[redirects]]
+  from   = "/api/refresh"
+  to     = "/.netlify/functions/refresh"
+  status = 200
+
+# SPA routing: every other path resolves to index.html so deep links work.
 [[redirects]]
   from   = "/*"
   to     = "/index.html"

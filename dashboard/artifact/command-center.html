@@ -1,0 +1,739 @@
+<title>NevadoMedia Command Center</title>
+<style>
+  /* Layout: fixed header with tab rail, single scrolling column of cards.
+     Dark only — this is an operations screen opened at 6am, and the reference
+     it was designed against is dark. */
+  :root {
+    --bg: #0D0F1A;
+    --surface: #141829;
+    --raised: #1B2038;
+    --line: #252B45;
+    --fg: #E8EAF2;
+    --dim: #8A90A8;
+    --accent: #7C5CFF;
+    --accent-soft: #A78BFA;
+    --good: #22C55E;
+    --warn: #F5B544;
+    --bad: #EF4444;
+    --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: rgba(13, 15, 26, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-block: 12px;
+    padding-inline: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .mark {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+    display: grid; place-items: center;
+    font-weight: 700; color: #fff;
+    flex: none;
+  }
+
+  .brand b { display: block; font-size: 14px; line-height: 1.2; }
+  .brand span { display: block; font-size: 11px; color: var(--dim); line-height: 1.2; }
+
+  .status {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--dim);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex: none; }
+  .dot.on { background: var(--good); }
+  .dot.off { background: var(--warn); }
+
+  nav {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+
+  nav button {
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--dim);
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+  nav button:hover { color: var(--fg); }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-block: 20px 56px;
+    padding-inline: 16px;
+    display: grid;
+    gap: 14px;
+  }
+
+  h1 { font-size: 20px; margin: 0; text-wrap: balance; }
+  h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+  .sub { color: var(--dim); font-size: 13px; margin: 2px 0 0; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+  .tile .k { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); }
+  .tile .v { font-size: 26px; font-weight: 650; margin-top: 4px; }
+  .tile .n { font-size: 11.5px; color: var(--dim); margin-top: 3px; }
+  .v.bad { color: var(--bad); }
+  .v.good { color: var(--good); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid var(--line); color: var(--dim);
+    border-radius: 999px; padding: 2px 8px;
+    font-size: 11px; white-space: nowrap;
+  }
+  .pill.good { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, transparent); background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .pill.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+  .pill.bad  { color: var(--bad);  border-color: color-mix(in srgb, var(--bad) 40%, transparent);  background: color-mix(in srgb, var(--bad) 10%, transparent); }
+
+  input, select, textarea {
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    padding: 7px 9px;
+    width: 100%;
+    min-width: 0;
+  }
+  textarea { resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  label { display: block; min-width: 0; }
+  label .lbl { font-size: 11px; color: var(--dim); display: block; margin-bottom: 3px; }
+
+  .row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+
+  button.act {
+    appearance: none;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 13px;
+    cursor: pointer;
+  }
+  button.act:hover { filter: brightness(1.12); }
+  button.ghost { background: none; color: var(--dim); border: 1px solid var(--line); }
+  button.ghost:hover { color: var(--fg); }
+
+  .client { border-left: 3px solid var(--line); }
+  .client.risk { border-left-color: var(--bad); }
+
+  .head { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .head .who { min-width: 0; flex: 1; }
+  .head .who b { font-size: 15px; }
+  .head .who span { display: block; font-size: 12px; color: var(--dim); }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); font-weight: 600; padding: 8px 8px; }
+  td { padding: 6px 8px; border-top: 1px solid var(--line); }
+  .scroll { overflow-x: auto; margin-inline: -16px; padding-inline: 16px; }
+
+  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .col { background: color-mix(in srgb, var(--surface) 60%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 9px; min-width: 0; }
+  .col h3 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .item { background: var(--raised); border: 1px solid var(--line); border-radius: 9px; padding: 9px; margin-bottom: 7px; }
+  .item b { font-size: 12.5px; font-weight: 500; display: block; }
+  .item span { font-size: 11px; color: var(--dim); }
+  .item select { margin-top: 6px; font-size: 11px; padding: 4px 6px; }
+
+  .empty { color: var(--dim); font-size: 13px; text-align: center; padding: 26px 10px; }
+  .note { font-size: 12px; color: var(--dim); }
+  .saved { font-size: 11px; color: var(--good); }
+  .err { font-size: 12px; color: var(--bad); }
+
+  .banner { border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 9%, transparent); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--warn); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+<header>
+  <div class="bar">
+    <div class="mark">N</div>
+    <div class="brand">
+      <b>NevadoMedia</b>
+      <span>Command Center</span>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
+  </div>
+  <nav id="tabs" role="tablist"></nav>
+</header>
+
+<main id="view"></main>
+
+<script>
+(function () {
+  "use strict";
+
+  var TABS = [
+    { id: "today",   label: "Today" },
+    { id: "clients", label: "Clients" },
+    { id: "content", label: "Content" },
+    { id: "weekly",  label: "Weekly" },
+    { id: "money",   label: "Money" }
+  ];
+
+  var STAGES = ["Scripted", "Shot", "Edited", "Approved", "Scheduled", "Posted"];
+  var BALL = ["NevadoMedia", "Client", "Waiting"];
+  var PAY = ["Paid", "Pending", "Overdue"];
+
+  var db = null;
+  var canWrite = false;
+  var state = { clients: [], content: [], weeks: [], expenses: [] };
+  var tab = "today";
+
+  /* ---------- helpers ---------- */
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k.slice(0, 2) === "on") n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+    return n;
+  }
+
+  function money(v) {
+    var n = Number(v);
+    if (!isFinite(n)) return "—";
+    return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+
+  function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+  function daysSince(iso) {
+    if (!iso) return null;
+    var then = new Date(iso + "T00:00:00").getTime();
+    if (isNaN(then)) return null;
+    return Math.round((new Date().setHours(0, 0, 0, 0) - then) / 86400000);
+  }
+
+  function mondayOf(d) {
+    var c = new Date(d || Date.now());
+    c.setDate(c.getDate() - ((c.getDay() + 6) % 7));
+    return c.toISOString().slice(0, 10);
+  }
+
+  /* A field that writes on blur, and says so. Never on keystroke. */
+  function field(opts) {
+    var wrap = el("label");
+    if (opts.label) {
+      var head = el("span", { class: "lbl" });
+      head.appendChild(document.createTextNode(opts.label));
+      var flag = el("span", { class: "saved", text: "" });
+      flag.style.marginLeft = "6px";
+      head.appendChild(flag);
+      wrap.appendChild(head);
+      opts.flag = flag;
+    }
+    var input;
+    if (opts.type === "select") {
+      input = el("select");
+      (opts.options || []).forEach(function (o) {
+        input.appendChild(el("option", { value: o, text: o }));
+      });
+      input.value = opts.value == null ? "" : String(opts.value);
+      input.addEventListener("change", function () { commit(opts, input.value); });
+    } else if (opts.type === "textarea") {
+      input = el("textarea", { rows: opts.rows || 2 });
+      input.value = opts.value == null ? "" : String(opts.value);
+      input.addEventListener("blur", function () { commit(opts, input.value); });
+    } else {
+      input = el("input", { type: opts.type || "text" });
+      if (opts.placeholder) input.placeholder = opts.placeholder;
+      input.value = opts.value == null ? "" : String(opts.value);
+      input.addEventListener("blur", function () { commit(opts, input.value); });
+    }
+    if (!canWrite) input.disabled = true;
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function commit(opts, raw) {
+    var value = opts.number ? (raw === "" ? 0 : Number(raw)) : raw;
+    if (opts.number && !isFinite(value)) return;
+    if (String(opts.value == null ? "" : opts.value) === String(raw)) return;
+    opts.value = value;
+    var patch = {};
+    patch[opts.key] = value;
+    write(opts.path, patch, opts.flag);
+  }
+
+  function write(path, patch, flag) {
+    if (!db) return;
+    if (flag) { flag.textContent = "saving…"; flag.style.color = "var(--dim)"; }
+    db.doc(path).update(patch).then(function () {
+      if (flag) {
+        flag.textContent = "saved";
+        flag.style.color = "var(--good)";
+        setTimeout(function () { flag.textContent = ""; }, 1600);
+      }
+    }, function (e) {
+      if (flag) {
+        flag.textContent = "not saved";
+        flag.style.color = "var(--bad)";
+      }
+      if (e && e.code === "invalid_argument") canWrite = false;
+    });
+  }
+
+  /* ---------- views ---------- */
+
+  function viewToday() {
+    var out = [];
+    var active = state.clients.filter(function (c) { return c.active !== false; });
+    var risk = active.filter(function (c) { return c.at_risk; });
+    var contracted = active.reduce(function (s, c) { return s + (Number(c.retainer) || 0); }, 0);
+    var openItems = state.content.filter(function (c) { return c.stage !== "Posted"; }).length;
+
+    var hour = new Date().getHours();
+    var hello = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+    out.push(el("div", {}, [
+      el("h1", { text: hello + ", Sebastian." }),
+      el("p", { class: "sub", text: new Date().toLocaleDateString("en-US", {
+        weekday: "long", month: "long", day: "numeric", year: "numeric" }) })
+    ]));
+
+    out.push(el("div", { class: "tiles" }, [
+      tile("MRR Contracted", money(contracted), active.length + " active clients"),
+      tile("Active Clients", String(active.length), ""),
+      tile("Content In Flight", String(openItems), "not yet posted"),
+      tile("At Risk", String(risk.length), risk.length ? risk.map(function (c) { return c.name; }).join(", ") : "all clear",
+           risk.length ? "bad" : "good")
+    ]));
+
+    if (risk.length) {
+      out.push(el("div", { class: "banner" },
+        [document.createTextNode(risk.length + " client" + (risk.length > 1 ? "s" : "") +
+          " flagged at risk: " + risk.map(function (c) { return c.name; }).join(" · "))]));
+    }
+
+    /* Ball status — who owes the next move, per client. */
+    var ballCard = el("div", { class: "card" }, [el("h2", { text: "Who has the ball" })]);
+    if (!active.length) {
+      ballCard.appendChild(el("div", { class: "empty", text: "No clients yet. Add one on the Clients tab." }));
+    } else {
+      active.forEach(function (c) {
+        var stale = daysSince(c.last_touchpoint);
+        var line = el("div", { class: "row" }, [
+          el("div", {}, [
+            el("div", { text: c.name }),
+            el("div", { class: "note", text: c.next_action || "no next action set" })
+          ]),
+          field({ type: "select", options: BALL, value: c.ball_side || "NevadoMedia",
+                  path: "clients/" + c.id, key: "ball_side" })
+        ]);
+        line.style.alignItems = "center";
+        line.style.paddingBlock = "8px";
+        line.style.borderTop = "1px solid var(--line)";
+        if (stale != null && stale >= 2) {
+          var warn = el("div", { class: "tags" }, [el("span", { class: "pill bad", text: "no contact " + stale + "d" })]);
+          line.appendChild(warn);
+        }
+        ballCard.appendChild(line);
+      });
+    }
+    out.push(ballCard);
+    return out;
+  }
+
+  function tile(k, v, n, tone) {
+    return el("div", { class: "tile" }, [
+      el("div", { class: "k", text: k }),
+      el("div", { class: "v" + (tone ? " " + tone : ""), text: v }),
+      n ? el("div", { class: "n", text: n }) : null
+    ]);
+  }
+
+  function viewClients() {
+    var out = [];
+    out.push(el("div", {}, [
+      el("h1", { text: "Clients" }),
+      el("p", { class: "sub", text: "Every field saves when you tap away from it." })
+    ]));
+
+    if (canWrite) {
+      out.push(el("div", {}, [
+        el("button", { class: "act", onclick: addClient, text: "Add client" })
+      ]));
+    }
+
+    if (!state.clients.length) {
+      out.push(el("div", { class: "card" }, [
+        el("div", { class: "empty", text: "No clients yet. Add your first one above." })
+      ]));
+      return out;
+    }
+
+    state.clients.forEach(function (c) {
+      var p = "clients/" + c.id;
+      var stale = daysSince(c.last_touchpoint);
+      var tags = el("div", { class: "tags" });
+      if (c.at_risk) tags.appendChild(el("span", { class: "pill bad", text: "At risk" }));
+      if (stale != null && stale >= 2) tags.appendChild(el("span", { class: "pill bad", text: "No contact " + stale + "d" }));
+      if (c.payment_status) {
+        tags.appendChild(el("span", {
+          class: "pill " + (c.payment_status === "Paid" ? "good" : c.payment_status === "Overdue" ? "bad" : "warn"),
+          text: c.payment_status
+        }));
+      }
+
+      var card = el("div", { class: "card client" + (c.at_risk ? " risk" : "") }, [
+        el("div", { class: "head" }, [
+          el("div", { class: "who" }, [
+            el("b", { text: c.name }),
+            el("span", { text: [c.service, c.location].filter(Boolean).join(" · ") || "—" })
+          ]),
+          tags
+        ]),
+        el("div", { class: "row" }, [
+          field({ label: "Retainer", type: "number", number: true, value: c.retainer, path: p, key: "retainer" }),
+          field({ label: "Payment", type: "select", options: PAY, value: c.payment_status || "Pending", path: p, key: "payment_status" }),
+          field({ label: "Ball with", type: "select", options: BALL, value: c.ball_side || "NevadoMedia", path: p, key: "ball_side" }),
+          field({ label: "Last contact", type: "date", value: c.last_touchpoint, path: p, key: "last_touchpoint" })
+        ]),
+        el("div", { class: "row" }, [
+          field({ label: "Service", value: c.service, path: p, key: "service" }),
+          field({ label: "Next action", value: c.next_action, placeholder: "What happens next?", path: p, key: "next_action" })
+        ]),
+        field({ label: "Notes", type: "textarea", rows: 2, value: c.notes, path: p, key: "notes" })
+      ]);
+
+      if (canWrite) {
+        var controls = el("div", { class: "tags" });
+        controls.style.marginTop = "10px";
+        controls.appendChild(el("button", {
+          class: "act ghost",
+          text: c.at_risk ? "Clear risk flag" : "Flag at risk",
+          onclick: function () { write(p, { at_risk: !c.at_risk }); }
+        }));
+        controls.appendChild(el("button", {
+          class: "act ghost",
+          text: "Log contact today",
+          onclick: function () { write(p, { last_touchpoint: todayISO() }); }
+        }));
+        card.appendChild(controls);
+      }
+      out.push(card);
+    });
+    return out;
+  }
+
+  function viewContent() {
+    var out = [];
+    out.push(el("div", {}, [
+      el("h1", { text: "Content" }),
+      el("p", { class: "sub", text: "Move a piece along with the dropdown on its card." })
+    ]));
+
+    if (canWrite) {
+      var title = el("input", { placeholder: "Title" });
+      var who = el("select");
+      state.clients.forEach(function (c) { who.appendChild(el("option", { value: c.id, text: c.name })); });
+      var add = el("button", {
+        class: "act",
+        text: "Add",
+        onclick: function () {
+          var t = title.value.trim();
+          if (!t || !db) return;
+          db.collection("content").add({
+            title: t, client_id: who.value, stage: "Scripted",
+            format: "", assigned_to: "", due_date: "", created: Date.now()
+          });
+          title.value = "";
+        }
+      });
+      var form = el("div", { class: "card" }, [
+        el("div", { class: "row" }, [title, who, add])
+      ]);
+      out.push(form);
+    }
+
+    var board = el("div", { class: "board" });
+    STAGES.forEach(function (stage) {
+      var items = state.content.filter(function (c) { return (c.stage || "Scripted") === stage; });
+      var col = el("div", { class: "col" }, [
+        el("h3", {}, [
+          el("span", { text: stage }),
+          el("span", { class: "tnum", text: String(items.length) })
+        ])
+      ]);
+      items.forEach(function (it) {
+        var owner = state.clients.filter(function (c) { return c.id === it.client_id; })[0];
+        var pick = el("select");
+        STAGES.forEach(function (s) { pick.appendChild(el("option", { value: s, text: s })); });
+        pick.value = it.stage || "Scripted";
+        if (!canWrite) pick.disabled = true;
+        pick.addEventListener("change", function () {
+          write("content/" + it.id, { stage: pick.value });
+        });
+        col.appendChild(el("div", { class: "item" }, [
+          el("b", { text: it.title }),
+          el("span", { text: owner ? owner.name : "Unassigned" }),
+          pick
+        ]));
+      });
+      if (!items.length) col.appendChild(el("div", { class: "note", text: "—" }));
+      board.appendChild(col);
+    });
+    out.push(board);
+    return out;
+  }
+
+  function viewWeekly() {
+    var out = [];
+    var week = mondayOf();
+    var has = state.weeks.some(function (w) { return w.id === week; });
+
+    out.push(el("div", {}, [
+      el("h1", { text: "Weekly" }),
+      el("p", { class: "sub", text: "One row per week. Numbers you type stay put." })
+    ]));
+
+    if (canWrite && !has) {
+      out.push(el("div", {}, [el("button", {
+        class: "act", text: "Start this week",
+        onclick: function () {
+          if (!db) return;
+          db.doc("weeks/" + week).set({
+            calls_booked: 0, show_rate: 0, close_rate: 0,
+            revenue: 0, churn_rate: 0, tasks: 0
+          });
+        }
+      })]));
+    }
+
+    if (!state.weeks.length) {
+      out.push(el("div", { class: "card" }, [
+        el("div", { class: "empty", text: "No weeks recorded yet." })
+      ]));
+      return out;
+    }
+
+    var cols = [
+      { k: "calls_booked", h: "Calls" },
+      { k: "show_rate",    h: "Show %" },
+      { k: "close_rate",   h: "Close %" },
+      { k: "revenue",      h: "Revenue" },
+      { k: "churn_rate",   h: "Churn %" },
+      { k: "tasks",        h: "Open tasks" }
+    ];
+
+    var table = el("table");
+    var hr = el("tr", {}, [el("th", { text: "Week of" })]);
+    cols.forEach(function (c) { hr.appendChild(el("th", { text: c.h })); });
+    table.appendChild(el("thead", {}, [hr]));
+
+    var body = el("tbody");
+    state.weeks.slice().sort(function (a, b) { return a.id < b.id ? 1 : -1; }).forEach(function (w) {
+      var tr = el("tr", {}, [el("td", { class: "tnum", text: w.id })]);
+      cols.forEach(function (c) {
+        var cell = el("td");
+        cell.appendChild(field({
+          type: "number", number: true, value: w[c.k],
+          path: "weeks/" + w.id, key: c.k
+        }));
+        tr.appendChild(cell);
+      });
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    out.push(el("div", { class: "card" }, [el("div", { class: "scroll" }, [table])]));
+    return out;
+  }
+
+  function viewMoney() {
+    var out = [];
+    var active = state.clients.filter(function (c) { return c.active !== false; });
+    var contracted = active.reduce(function (s, c) { return s + (Number(c.retainer) || 0); }, 0);
+    var collected = active.filter(function (c) { return c.payment_status === "Paid"; })
+                          .reduce(function (s, c) { return s + (Number(c.retainer) || 0); }, 0);
+    var spend = state.expenses.reduce(function (s, e) { return s + (Number(e.amount) || 0); }, 0);
+    var profit = collected - spend;
+
+    out.push(el("div", {}, [
+      el("h1", { text: "Money" }),
+      el("p", { class: "sub", text: "Collected counts only clients marked Paid." })
+    ]));
+
+    out.push(el("div", { class: "tiles" }, [
+      tile("Contracted", money(contracted), "if everyone pays"),
+      tile("Collected", money(collected), "marked Paid"),
+      tile("Expenses", money(spend), "per month"),
+      tile("Net", money(profit), "collected − expenses", profit < 0 ? "bad" : "good")
+    ]));
+
+    var card = el("div", { class: "card" }, [el("h2", { text: "Monthly expenses" })]);
+    if (!state.expenses.length) {
+      card.appendChild(el("div", { class: "empty", text: "No expenses yet." }));
+    } else {
+      state.expenses.forEach(function (e) {
+        var line = el("div", { class: "row" }, [
+          field({ value: e.category, path: "expenses/" + e.id, key: "category" }),
+          field({ type: "number", number: true, value: e.amount, path: "expenses/" + e.id, key: "amount" })
+        ]);
+        line.style.marginBottom = "8px";
+        card.appendChild(line);
+      });
+      var total = el("div", { class: "note" });
+      total.style.borderTop = "1px solid var(--line)";
+      total.style.paddingTop = "10px";
+      total.textContent = "Total " + money(spend) + " per month";
+      card.appendChild(total);
+    }
+    if (canWrite) {
+      card.appendChild(el("button", {
+        class: "act ghost", text: "Add expense",
+        onclick: function () {
+          if (db) db.collection("expenses").add({ category: "New expense", amount: 0 });
+        }
+      }));
+    }
+    out.push(card);
+    return out;
+  }
+
+  function addClient() {
+    if (!db) return;
+    db.collection("clients").add({
+      name: "New client", service: "", retainer: 0, payment_status: "Pending",
+      ball_side: "NevadoMedia", at_risk: false, active: true,
+      next_action: "", last_touchpoint: "", notes: "", location: ""
+    });
+  }
+
+  /* ---------- shell ---------- */
+
+  function renderTabs() {
+    var nav = document.getElementById("tabs");
+    nav.textContent = "";
+    TABS.forEach(function (t) {
+      nav.appendChild(el("button", {
+        role: "tab",
+        "aria-selected": String(t.id === tab),
+        text: t.label,
+        onclick: function () { tab = t.id; render(); }
+      }));
+    });
+  }
+
+  function render() {
+    renderTabs();
+    var main = document.getElementById("view");
+    main.textContent = "";
+    var nodes =
+      tab === "clients" ? viewClients() :
+      tab === "content" ? viewContent() :
+      tab === "weekly"  ? viewWeekly()  :
+      tab === "money"   ? viewMoney()   : viewToday();
+    nodes.forEach(function (n) { main.appendChild(n); });
+  }
+
+  function setStatus(text, cls) {
+    document.getElementById("statusText").textContent = text;
+    document.getElementById("dot").className = "dot " + (cls || "");
+  }
+
+  function docsToArray(snap) {
+    return snap.docs.map(function (d) {
+      var o = d.data() || {};
+      var copy = {};
+      Object.keys(o).forEach(function (k) { copy[k] = o[k]; });
+      copy.id = d.id;
+      return copy;
+    });
+  }
+
+  /* First frame: a real empty state, before the store answers. */
+  render();
+
+  if (!window.claude || !window.claude.use) {
+    setStatus("Offline preview", "off");
+  } else {
+    window.claude.use("db").then(function (store) {
+      if (!store) { setStatus("Storage unavailable", "off"); return; }
+      db = store;
+      canWrite = true;
+      setStatus("Saving to this page", "on");
+
+      [["clients", "clients"], ["content", "content"], ["weeks", "weeks"], ["expenses", "expenses"]]
+        .forEach(function (pair) {
+          db.collection(pair[0]).onSnapshot(function (snap) {
+            state[pair[1]] = docsToArray(snap);
+            render();
+          }, function (e) {
+            setStatus("Sync problem: " + e.code, "off");
+          });
+        });
+    }, function () {
+      setStatus("Storage unavailable", "off");
+    });
+  }
+})();
+</script>

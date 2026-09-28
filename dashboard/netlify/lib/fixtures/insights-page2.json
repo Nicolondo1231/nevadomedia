@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "date_start": "2026-09-26", "date_stop": "2026-09-26",
+      "campaign_id": "120200", "campaign_name": "Kitchens — Fairfield County",
+      "adset_id": "120300", "adset_name": "Homeowners 35-65 | 06880,06830",
+      "ad_id": "120400", "ad_name": "Marble install before/after",
+      "spend": "150.00", "impressions": "9000", "reach": "7000",
+      "frequency": "1.2857", "clicks": "300", "ctr": "3.3333", "cpm": "16.6666",
+      "actions": [{ "action_type": "offsite_conversion.fb_pixel_lead", "value": "3" }],
+      "cost_per_action_type": [{ "action_type": "offsite_conversion.fb_pixel_lead", "value": "50.0" }],
+      "quality_ranking": "AVERAGE", "engagement_rate_ranking": "AVERAGE"
+    }
+  ],
+  "paging": {}
+}
