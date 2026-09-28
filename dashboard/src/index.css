@@ -20,6 +20,25 @@
                Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --radius-card: 16px;
+
+  /* Chart series. Brand-led order (violet first, to sit with the UI accent),
+     validated for the #141829 card surface with the data-viz palette checker:
+     lightness band, chroma floor, CVD separation, normal-vision floor and
+     contrast vs surface all pass. Assign in fixed order, never cycled — a
+     fifth series folds into "Other" or becomes small multiples. */
+  --color-series-1: #9085e9;  /* violet */
+  --color-series-2: #d95926;  /* orange */
+  --color-series-3: #199e70;  /* aqua   */
+  --color-series-4: #3987e5;  /* blue   */
+
+  /* Funnel stages: one hue, monotone light to dark. Validated as an ordinal
+     ramp; the darkest step still clears 2:1 against the surface. */
+  --color-funnel-1: #cde2fb;
+  --color-funnel-2: #9ec5f4;
+  --color-funnel-3: #6da7ec;
+  --color-funnel-4: #3987e5;
+  --color-funnel-5: #256abf;
+  --color-funnel-6: #184f95;
 }
 
 @layer base {

@@ -103,7 +103,11 @@ nothing back. Requires the `postgresql-16` server binaries; needs no network.
 | Expenses, weekly revenue, Stripe | yes | **no** |
 | Content pipeline, onboarding, team, leads, comms | yes | yes |
 | Ad + content performance | yes | read only |
+| Funnel, Calls & Intel (sales pipeline) | yes | **no** |
 | Create / delete clients | yes | **no** |
+
+Sections an operator cannot open are hidden from the sidebar *and* guarded in
+the router, so typing the URL does not reach them.
 
 Enforced in the database, not in the UI: `clients` is admin-only and operators
 reach it through the column-filtered `clients_ops` view, which simply has no

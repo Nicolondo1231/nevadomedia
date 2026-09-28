@@ -1,8 +1,13 @@
 # NevadoMedia BI Dashboard — Build Plan
 
-Status: **phase 1 code complete, not yet deployed.** Schema, RLS, auth and the
-deployable shell are built and tested locally. Deployment is blocked on §4.
-Phases 2–14 not started.
+Status: **phases 1–2 code complete, not yet deployed.** Schema, RLS, auth, the
+navigation shell and all ten section frames are built and verified locally.
+Deployment is blocked on §4. Phase 3 not started.
+
+Chart palettes are fixed and validated (see `src/index.css`): a four-slot
+categorical series order for the CPL trend, and a six-step ordinal ramp for the
+funnel. Both clear the colourblind-separation, contrast and lightness gates
+against the card surface.
 Owner: Sebastian (admin) · Operator: Nico (operations only)
 Branch: `claude/awesome-ramanujan-l0hfh3`
 
