@@ -1,0 +1,804 @@
+-- ============================================================================
+-- NevadoMedia dashboard — complete database setup
+--
+-- Paste this WHOLE file into the Supabase SQL Editor and press Run. Once.
+-- It builds every table, the security rules, and loads your clients and
+-- expenses.
+--
+-- Intended for a fresh project. If you need to start over, see the reset
+-- snippet at the very bottom.
+-- ============================================================================
+
+
+-- ===========================================================================
+-- SOURCE: migrations/0001_schema.sql
+-- ===========================================================================
+
+-- NevadoMedia BI Dashboard — schema
+-- Phase 1. Run against a fresh Supabase project, in order, before 0002_rls.sql.
+
+create extension if not exists "pgcrypto";
+
+-- ---------------------------------------------------------------------------
+-- Enums
+-- ---------------------------------------------------------------------------
+create type user_role          as enum ('admin', 'operator');
+create type payment_status     as enum ('paid', 'pending', 'overdue');
+create type ball_side          as enum ('nevadomedia', 'client', 'waiting');
+create type content_stage      as enum ('scripted', 'shot', 'edited', 'approved', 'scheduled', 'posted');
+create type sales_stage        as enum ('lead', 'setting_call', 'sales_call', 'proposal', 'closed', 'lost');
+create type lead_status        as enum ('new', 'qualified', 'disqualified', 'booked', 'closed', 'lost');
+create type call_class         as enum ('sales', 'client', 'internal');
+create type sync_status        as enum ('running', 'success', 'error');
+create type funnel_stage       as enum ('visitor', 'form_started', 'form_completed', 'call_booked', 'call_showed', 'closed');
+create type assignment_status  as enum ('pending', 'in_progress', 'delivered', 'overdue');
+
+-- ---------------------------------------------------------------------------
+-- updated_at helper
+-- ---------------------------------------------------------------------------
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- profiles — one row per auth user, carries the role that RLS keys off
+-- ---------------------------------------------------------------------------
+create table public.profiles (
+  id          uuid primary key references auth.users(id) on delete cascade,
+  email       text not null unique,
+  full_name   text,
+  role        user_role not null default 'operator',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- New signups become operators unless the email is on the admin allowlist.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
+    case when lower(new.email) in ('sebastian@nevadomedia.info')
+         then 'admin'::user_role
+         else 'operator'::user_role
+    end
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- ---------------------------------------------------------------------------
+-- clients
+-- ---------------------------------------------------------------------------
+create table public.clients (
+  id              uuid primary key default gen_random_uuid(),
+  -- unique so the seed and the Stripe/GHL matchers can upsert on name
+  name            text not null unique,
+  service         text,
+  retainer        numeric(10,2) not null default 0,       -- money: admin only
+  payment_status  payment_status not null default 'pending',
+  payment_status_override boolean not null default false, -- true = manual wins over Stripe
+  contract_start  date,
+  renewal_date    date,
+  last_touchpoint date,
+  next_action     text,
+  next_action_due date,
+  goals           text,
+  goal_progress   smallint not null default 0 check (goal_progress between 0 and 100),
+  at_risk         boolean not null default false,
+  notes           text,
+  ball_side       ball_side not null default 'nevadomedia',
+  location        text,
+  active          boolean not null default true,
+  stripe_customer_id text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index on public.clients (active, at_risk);
+
+-- days_until_renewal is derived, never stored.
+create or replace function public.days_until_renewal(c public.clients)
+returns integer
+language sql
+stable
+as $$ select (c.renewal_date - current_date)::int $$;
+
+-- ---------------------------------------------------------------------------
+-- onboarding_checklist
+-- ---------------------------------------------------------------------------
+create table public.onboarding_checklist (
+  id         uuid primary key default gen_random_uuid(),
+  client_id  uuid not null references public.clients(id) on delete cascade,
+  item       text not null,
+  owner      text,
+  completed  boolean not null default false,
+  due_date   date,
+  sort_order smallint not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index on public.onboarding_checklist (client_id, completed);
+
+-- ---------------------------------------------------------------------------
+-- content_pipeline
+-- ---------------------------------------------------------------------------
+create table public.content_pipeline (
+  id          uuid primary key default gen_random_uuid(),
+  client_id   uuid not null references public.clients(id) on delete cascade,
+  title       text not null,
+  format      text,
+  stage       content_stage not null default 'scripted',
+  assigned_to text,
+  due_date    date,
+  sort_order  integer not null default 0,   -- position inside its kanban column
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index on public.content_pipeline (stage, sort_order);
+create index on public.content_pipeline (client_id);
+
+-- ---------------------------------------------------------------------------
+-- weekly_metrics
+-- ---------------------------------------------------------------------------
+create table public.weekly_metrics (
+  id                uuid primary key default gen_random_uuid(),
+  week_date         date not null unique,          -- Monday of the week
+  calls_booked      integer not null default 0,
+  show_rate         numeric(5,2),                  -- percent
+  close_rate        numeric(5,2),
+  revenue           numeric(10,2) not null default 0,
+  churn_rate        numeric(5,2),
+  outstanding_tasks integer not null default 0,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- expenses
+-- ---------------------------------------------------------------------------
+create table public.expenses (
+  id         uuid primary key default gen_random_uuid(),
+  month      date not null,                        -- first of the month
+  category   text not null,
+  amount     numeric(10,2) not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (month, category)
+);
+
+-- ---------------------------------------------------------------------------
+-- sales_pipeline
+-- ---------------------------------------------------------------------------
+create table public.sales_pipeline (
+  id              uuid primary key default gen_random_uuid(),
+  prospect_name   text not null,
+  trade           text,
+  location        text,
+  monthly_revenue numeric(12,2),
+  stage           sales_stage not null default 'lead',
+  next_step       text,
+  next_step_due   date,
+  probability     smallint check (probability between 0 and 100),
+  notes           text,
+  sort_order      integer not null default 0,
+  ghl_opportunity_id text unique,                  -- set by the GHL sync (phase 5)
+  ghl_contact_id  text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index on public.sales_pipeline (stage, sort_order);
+
+-- ---------------------------------------------------------------------------
+-- team_assignments
+-- ---------------------------------------------------------------------------
+create table public.team_assignments (
+  id             uuid primary key default gen_random_uuid(),
+  assignee       text not null,                    -- 'Editor', 'Caleb', ...
+  task           text not null,
+  client_id      uuid references public.clients(id) on delete set null,
+  sent_date      date,
+  due_date       date,
+  delivered_date date,
+  status         assignment_status not null default 'pending',
+  payment_amount numeric(10,2),
+  payment_status payment_status,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index on public.team_assignments (assignee, status);
+
+-- ---------------------------------------------------------------------------
+-- lead_response_log
+-- ---------------------------------------------------------------------------
+create table public.lead_response_log (
+  id                   uuid primary key default gen_random_uuid(),
+  lead_name            text not null,
+  lead_source          text,
+  client_id            uuid references public.clients(id) on delete set null,
+  received_at          timestamptz not null,
+  first_contacted_at   timestamptz,
+  -- generated: minutes between receipt and first contact. Null until contacted.
+  response_time_minutes integer generated always as (
+    case when first_contacted_at is null then null
+         else floor(extract(epoch from (first_contacted_at - received_at)) / 60)::int
+    end
+  ) stored,
+  status               lead_status not null default 'new',
+  ghl_contact_id       text unique,
+  notes                text,
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+create index on public.lead_response_log (received_at desc);
+
+-- ---------------------------------------------------------------------------
+-- client_communication_log
+-- ---------------------------------------------------------------------------
+create table public.client_communication_log (
+  id                  uuid primary key default gen_random_uuid(),
+  client_id           uuid not null references public.clients(id) on delete cascade,
+  date                date not null default current_date,
+  summary             text not null,
+  next_followup_date  date,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+create index on public.client_communication_log (client_id, date desc);
+
+-- ---------------------------------------------------------------------------
+-- funnel_events
+-- ---------------------------------------------------------------------------
+create table public.funnel_events (
+  id         uuid primary key default gen_random_uuid(),
+  session_id text not null,
+  stage      funnel_stage not null,
+  field_name text,                                  -- last field touched, for drop-off
+  drop_off   boolean not null default false,
+  metadata   jsonb not null default '{}'::jsonb,
+  timestamp  timestamptz not null default now()
+);
+create index on public.funnel_events (session_id);
+create index on public.funnel_events (stage, timestamp desc);
+
+-- ---------------------------------------------------------------------------
+-- ad_accounts — maps a provider account id to a client
+-- ---------------------------------------------------------------------------
+create table public.ad_accounts (
+  id         uuid primary key default gen_random_uuid(),
+  client_id  uuid references public.clients(id) on delete set null,
+  provider   text not null default 'meta',
+  account_id text not null,                         -- 'act_919241897734064'
+  label      text not null,
+  active     boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (provider, account_id)
+);
+
+-- ---------------------------------------------------------------------------
+-- meta_insights_daily — one row per ad per day (phase 4)
+-- ---------------------------------------------------------------------------
+create table public.meta_insights_daily (
+  id            uuid primary key default gen_random_uuid(),
+  account_id    text not null,
+  date          date not null,
+  campaign_id   text,
+  campaign_name text,
+  adset_id      text,
+  adset_name    text,
+  ad_id         text,
+  ad_name       text,
+  spend         numeric(12,2) not null default 0,
+  impressions   bigint not null default 0,
+  reach         bigint not null default 0,
+  frequency     numeric(8,4),
+  clicks        bigint not null default 0,
+  ctr           numeric(8,4),
+  cpm           numeric(10,4),
+  leads         integer not null default 0,
+  cpl           numeric(10,2),
+  cost_per_action_type      jsonb not null default '{}'::jsonb,
+  quality_ranking           text,
+  engagement_rate_ranking   text,
+  synced_at     timestamptz not null default now(),
+  unique (account_id, date, ad_id)
+);
+create index on public.meta_insights_daily (account_id, date desc);
+
+-- ---------------------------------------------------------------------------
+-- Metricool (phase 6)
+-- ---------------------------------------------------------------------------
+create table public.metricool_daily (
+  id              uuid primary key default gen_random_uuid(),
+  brand_id        text not null,
+  date            date not null,
+  views           bigint not null default 0,
+  reach           bigint not null default 0,
+  engagement_rate numeric(8,4),
+  saves           integer not null default 0,
+  shares          integer not null default 0,
+  followers       integer,
+  synced_at       timestamptz not null default now(),
+  unique (brand_id, date)
+);
+
+create table public.metricool_posts (
+  id           uuid primary key default gen_random_uuid(),
+  brand_id     text not null,
+  post_id      text not null,
+  published_at timestamptz,
+  permalink    text,
+  caption      text,
+  views        bigint not null default 0,
+  reach        bigint not null default 0,
+  engagement   numeric(12,2) not null default 0,
+  saves        integer not null default 0,
+  shares       integer not null default 0,
+  synced_at    timestamptz not null default now(),
+  unique (brand_id, post_id)
+);
+create index on public.metricool_posts (brand_id, published_at desc);
+
+-- ---------------------------------------------------------------------------
+-- fathom_calls (phase 8)
+-- ---------------------------------------------------------------------------
+create table public.fathom_calls (
+  id             uuid primary key default gen_random_uuid(),
+  recording_id   text not null unique,
+  title          text,
+  started_at     timestamptz,
+  duration_min   integer,
+  classification call_class,
+  classification_locked boolean not null default false,  -- true once a human corrects it
+  summary        text,
+  action_items   jsonb not null default '[]'::jsonb,
+  url            text,
+  client_id      uuid references public.clients(id) on delete set null,
+  synced_at      timestamptz not null default now()
+);
+create index on public.fathom_calls (started_at desc);
+
+-- ---------------------------------------------------------------------------
+-- stripe_payments (phase 7)
+-- ---------------------------------------------------------------------------
+create table public.stripe_payments (
+  id                 uuid primary key default gen_random_uuid(),
+  client_id          uuid references public.clients(id) on delete set null,
+  stripe_customer_id text,
+  invoice_id         text unique,
+  amount             numeric(10,2) not null default 0,
+  currency           text not null default 'usd',
+  status             text not null,
+  paid_at            timestamptz,
+  due_at             timestamptz,
+  synced_at          timestamptz not null default now()
+);
+create index on public.stripe_payments (client_id, paid_at desc);
+
+-- ---------------------------------------------------------------------------
+-- calendar_events (phase 9)
+-- ---------------------------------------------------------------------------
+create table public.calendar_events (
+  id          uuid primary key default gen_random_uuid(),
+  external_id text not null unique,
+  title       text,
+  starts_at   timestamptz not null,
+  ends_at     timestamptz,
+  attendees   jsonb not null default '[]'::jsonb,
+  link        text,
+  synced_at   timestamptz not null default now()
+);
+create index on public.calendar_events (starts_at);
+
+-- ---------------------------------------------------------------------------
+-- notion_client_status (phase 10)
+-- ---------------------------------------------------------------------------
+create table public.notion_client_status (
+  id             uuid primary key default gen_random_uuid(),
+  client_id      uuid references public.clients(id) on delete set null,
+  page_id        text not null unique,
+  title          text,
+  status         text,
+  excerpt        text,
+  last_edited_at timestamptz,
+  synced_at      timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- sync_runs — drives every "last updated" label and the 24h stale badge
+-- ---------------------------------------------------------------------------
+create table public.sync_runs (
+  id           uuid primary key default gen_random_uuid(),
+  source       text not null,                     -- 'meta' | 'ghl' | 'metricool' | ...
+  account_ref  text,                              -- account/brand id, null = whole source
+  started_at   timestamptz not null default now(),
+  finished_at  timestamptz,
+  status       sync_status not null default 'running',
+  rows_written integer not null default 0,
+  error        text,
+  triggered_by text not null default 'cron'       -- 'cron' | 'manual'
+);
+create index on public.sync_runs (source, started_at desc);
+
+-- Latest successful run per source, for the freshness indicator.
+create view public.sync_freshness as
+select distinct on (source)
+  source,
+  finished_at as last_success_at,
+  rows_written,
+  triggered_by,
+  (now() - finished_at) > interval '24 hours' as is_stale
+from public.sync_runs
+where status = 'success' and finished_at is not null
+order by source, finished_at desc;
+
+-- ---------------------------------------------------------------------------
+-- quick_actions — audit trail for mark-done / add-note / flag-at-risk
+-- ---------------------------------------------------------------------------
+create table public.quick_actions (
+  id           uuid primary key default gen_random_uuid(),
+  actor        uuid references public.profiles(id) on delete set null,
+  kind         text not null,
+  target_table text,
+  target_id    uuid,
+  payload      jsonb not null default '{}'::jsonb,
+  created_at   timestamptz not null default now()
+);
+create index on public.quick_actions (created_at desc);
+
+-- ---------------------------------------------------------------------------
+-- updated_at triggers
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'profiles', 'clients', 'onboarding_checklist', 'content_pipeline',
+    'weekly_metrics', 'expenses', 'sales_pipeline', 'team_assignments',
+    'lead_response_log', 'client_communication_log', 'ad_accounts'
+  ] loop
+    execute format(
+      'create trigger touch_%1$s before update on public.%1$s
+         for each row execute function public.touch_updated_at()', t);
+  end loop;
+end $$;
+
+
+-- ===========================================================================
+-- SOURCE: migrations/0002_rls.sql
+-- ===========================================================================
+
+-- NevadoMedia BI Dashboard — Row Level Security
+-- Run after 0001_schema.sql.
+--
+-- Model:
+--   admin    (Sebastian) — everything.
+--   operator (Nico)      — operations only. No retainer amounts, no expenses,
+--                          no Stripe, no weekly revenue.
+--   anon                 — nothing, except inserting its own funnel events.
+--   service_role         — bypasses RLS entirely; used only by the VPS worker.
+
+-- ---------------------------------------------------------------------------
+-- Role helpers. SECURITY DEFINER so that reading profiles inside a profiles
+-- policy does not recurse.
+-- ---------------------------------------------------------------------------
+create or replace function public.current_app_role()
+returns user_role
+language sql
+stable
+security definer
+set search_path = public
+as $$ select role from public.profiles where id = auth.uid() $$;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$ select coalesce(public.current_app_role() = 'admin', false) $$;
+
+create or replace function public.is_staff()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$ select public.current_app_role() is not null $$;
+
+grant execute on function public.current_app_role, public.is_admin, public.is_staff
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Enable RLS everywhere. Default-deny: a table with RLS on and no matching
+-- policy returns zero rows.
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'profiles','clients','onboarding_checklist','content_pipeline','weekly_metrics',
+    'expenses','sales_pipeline','team_assignments','lead_response_log',
+    'client_communication_log','funnel_events','ad_accounts','meta_insights_daily',
+    'metricool_daily','metricool_posts','fathom_calls','stripe_payments',
+    'calendar_events','notion_client_status','sync_runs','quick_actions'
+  ] loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('alter table public.%I force row level security', t);
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- profiles
+-- ---------------------------------------------------------------------------
+create policy "read own profile" on public.profiles
+  for select to authenticated using (id = auth.uid());
+
+create policy "admin reads all profiles" on public.profiles
+  for select to authenticated using (public.is_admin());
+
+create policy "admin writes profiles" on public.profiles
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Admin-only tables (money)
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array['clients','expenses','weekly_metrics','stripe_payments'] loop
+    execute format(
+      'create policy "admin only" on public.%I
+         for all to authenticated
+         using (public.is_admin()) with check (public.is_admin())', t);
+  end loop;
+end $$;
+
+-- Operators reach clients through this column-filtered view instead. The view
+-- runs with the owner's rights, so it is not blocked by the policy above, and
+-- because it is a simple view it is auto-updatable — an operator can edit the
+-- operational columns and cannot see or touch the financial ones.
+create view public.clients_ops
+with (security_barrier) as
+select
+  id, name, service, contract_start, renewal_date, last_touchpoint,
+  next_action, next_action_due, goals, goal_progress, at_risk, notes,
+  ball_side, location, active, created_at, updated_at
+from public.clients;
+
+-- Supabase's default privileges grant ALL on every new object in `public` to
+-- anon and authenticated, so the grant below must be preceded by a revoke —
+-- otherwise an operator could INSERT and DELETE client rows through the view.
+revoke all on public.clients_ops from anon, authenticated;
+grant select, update on public.clients_ops to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Operational tables — both roles read and write
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'onboarding_checklist','content_pipeline','sales_pipeline','team_assignments',
+    'lead_response_log','client_communication_log','quick_actions'
+  ] loop
+    execute format(
+      'create policy "staff read"  on public.%I for select to authenticated
+         using (public.is_staff())', t);
+    execute format(
+      'create policy "staff write" on public.%I for all to authenticated
+         using (public.is_staff()) with check (public.is_staff())', t);
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- Synced tables — staff read, worker writes with service_role
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'ad_accounts','meta_insights_daily','metricool_daily','metricool_posts',
+    'fathom_calls','calendar_events','notion_client_status','sync_runs'
+  ] loop
+    execute format(
+      'create policy "staff read" on public.%I for select to authenticated
+         using (public.is_staff())', t);
+  end loop;
+end $$;
+
+-- Two exceptions where a human edits synced data by hand.
+create policy "admin edits ad accounts" on public.ad_accounts
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- Correcting a Fathom auto-classification must stick across re-syncs.
+create policy "staff reclassifies calls" on public.fathom_calls
+  for update to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+-- ---------------------------------------------------------------------------
+-- funnel_events — the public landing page writes here anonymously
+-- ---------------------------------------------------------------------------
+create policy "staff read funnel" on public.funnel_events
+  for select to authenticated using (public.is_staff());
+
+-- Anonymous visitors may only append, never read back.
+create policy "visitor appends funnel event" on public.funnel_events
+  for insert to anon with check (
+    session_id is not null and length(session_id) between 8 and 64
+  );
+
+-- ---------------------------------------------------------------------------
+-- sync_freshness view inherits sync_runs' policy through the base table.
+-- ---------------------------------------------------------------------------
+alter view public.sync_freshness set (security_invoker = true);
+revoke all on public.sync_freshness from anon, authenticated;
+grant select on public.sync_freshness to authenticated;
+
+
+-- ===========================================================================
+-- SOURCE: migrations/0003_phase3.sql
+-- ===========================================================================
+
+-- Phase 3 additions: things the manual-input sections need that phase 1 did not
+-- anticipate. Run after 0002_rls.sql.
+
+-- ---------------------------------------------------------------------------
+-- When a client relationship ended. Churn is "lost this month vs signed this
+-- month", and without this there is no way to date a loss — `active` alone
+-- says the state, not when it changed.
+-- ---------------------------------------------------------------------------
+alter table public.clients add column if not exists ended_at date;
+
+-- ---------------------------------------------------------------------------
+-- app_settings — small admin-owned key/value store. Revenue per head needs a
+-- team headcount, which belongs to nobody else's table.
+-- ---------------------------------------------------------------------------
+create table if not exists public.app_settings (
+  key        text primary key,
+  value      jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.app_settings enable row level security;
+alter table public.app_settings force row level security;
+
+create policy "admin manages settings" on public.app_settings
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create trigger touch_app_settings before update on public.app_settings
+  for each row execute function public.touch_updated_at();
+
+insert into public.app_settings (key, value) values
+  ('team_size', '3'::jsonb)
+on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Operators need to read the content pipeline's client colour coding, which
+-- means reading client names — already available through clients_ops.
+-- Nothing further required.
+-- ---------------------------------------------------------------------------
+
+
+-- ===========================================================================
+-- SOURCE: seed.sql
+-- ===========================================================================
+
+-- NevadoMedia BI Dashboard — seed data
+-- Idempotent: safe to re-run. Run after 0002_rls.sql.
+
+-- ---------------------------------------------------------------------------
+-- Clients
+-- ---------------------------------------------------------------------------
+insert into public.clients
+  (name, service, retainer, payment_status, contract_start, renewal_date, location, active, notes)
+values
+  ('Julian | Premier Marble Kitchens', 'Ads',            1000.00, 'pending', date '2026-09-26', date '2026-10-26', 'Connecticut', true,  null),
+  ('Julio | Jay Pro Finish',           'Ads (paused)',      0.00, 'paid',    null,              null,              'New Jersey',  true,  'Favor — long term play. Ads currently paused.'),
+  ('Cleber + Laura | FD Construction', 'Organic only',   1500.00, 'pending', null,              null,              null,          true,  'Starting soon.'),
+  ('Karol',                            'Organic content',2000.00, 'pending', null,              null,              null,          true,  'Decision pending.'),
+  ('NevadoMedia',                      'Own campaigns',     0.00, 'paid',    null,              null,              'Union, NJ',   true,  'Own agency. October launch.'),
+  ('Andrew | Best Pro Service',        'Ads',               0.00, 'pending', null,              null,              null,          false, 'Has a live Meta ad account and Metricool brand but is not on the active client list — confirm status.')
+on conflict (name) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Ad + social accounts. provider distinguishes Meta from Metricool.
+-- ---------------------------------------------------------------------------
+insert into public.ad_accounts (client_id, provider, account_id, label, active)
+select c.id, 'meta', v.account_id, v.label, v.active
+from (values
+  ('Andrew | Best Pro Service',        'act_919241897734064',  'Andrew | Best Pro Service',        true),
+  ('Julio | Jay Pro Finish',           'act_1759311301271024', 'Julio | Jay Pro Finish',           true),
+  ('NevadoMedia',                      'act_443475824888837',  'NevadoMedia Nicogrowth',           true)
+) as v(client_name, account_id, label, active)
+join public.clients c on c.name = v.client_name
+on conflict (provider, account_id) do nothing;
+
+-- Julian's Meta account id is still outstanding. Row is created inactive so the
+-- client↔account mapping exists; fill account_id in and set active once known.
+insert into public.ad_accounts (client_id, provider, account_id, label, active)
+select c.id, 'meta', 'act_PENDING_JULIAN', 'Julian | Premier Marble Kitchens', false
+from public.clients c where c.name = 'Julian | Premier Marble Kitchens'
+on conflict (provider, account_id) do nothing;
+
+insert into public.ad_accounts (client_id, provider, account_id, label, active)
+select c.id, 'metricool', v.brand_id, v.label, true
+from (values
+  ('NevadoMedia',               '6877144', 'SebasGrowth'),
+  ('Julio | Jay Pro Finish',    '6200713', 'Julio Jay Pro Finish'),
+  ('Andrew | Best Pro Service', '6213915', 'Andrew Best Pro Service')
+) as v(client_name, brand_id, label)
+join public.clients c on c.name = v.client_name
+on conflict (provider, account_id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Monthly expenses — $2,500/mo total
+-- ---------------------------------------------------------------------------
+insert into public.expenses (month, category, amount)
+values
+  (date_trunc('month', current_date)::date, 'Mentor',        1500.00),
+  (date_trunc('month', current_date)::date, 'Subscriptions',  500.00),
+  (date_trunc('month', current_date)::date, 'Phones',         250.00),
+  (date_trunc('month', current_date)::date, 'Editor',         250.00)
+on conflict (month, category) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Onboarding checklist template, applied to every active client
+-- ---------------------------------------------------------------------------
+insert into public.onboarding_checklist (client_id, item, owner, sort_order)
+select c.id, v.item, v.owner, v.sort_order
+from public.clients c
+cross join (values
+  ('Contract signed',                       'NevadoMedia', 1),
+  ('Deposit / first payment collected',     'NevadoMedia', 2),
+  ('Ad account access granted',             'Client',      3),
+  ('Facebook page + Instagram access',      'Client',      4),
+  ('Pixel / conversions API configured',    'NevadoMedia', 5),
+  ('Service areas + zip codes confirmed',   'Client',      6),
+  ('First shoot scheduled',                 'NevadoMedia', 7),
+  ('First shoot completed',                 'NevadoMedia', 8),
+  ('Creatives edited and approved',         'Client',      9),
+  ('Campaign launched',                     'NevadoMedia', 10),
+  ('Lead routing + notifications tested',   'NevadoMedia', 11),
+  ('Response-time expectations reviewed',   'Client',      12)
+) as v(item, owner, sort_order)
+where c.active
+  and not exists (
+    select 1 from public.onboarding_checklist o
+    where o.client_id = c.id and o.item = v.item
+  );
+
+
+-- ============================================================================
+-- Done. You should see "Success. No rows returned".
+--
+-- Verify with:
+--   select name, service, retainer from public.clients order by name;
+--   -- expect 6 rows
+--
+-- To start completely over (DESTROYS ALL DATA in this project):
+--   drop schema public cascade;
+--   create schema public;
+--   grant usage on schema public to anon, authenticated, service_role;
+--   alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+--   -- then paste this file again
+-- ============================================================================
