@@ -107,14 +107,38 @@ def build():
         '-- Two exceptions where a human edits synced data by hand.',
         synced + '\n\n-- Two exceptions where a human edits synced data by hand.', 1)
 
-    # 3. Give every function body a distinctive tag so no splitter can pair the
-    #    wrong delimiters.
+    # 3. pgcrypto is unnecessary — gen_random_uuid() has been core since
+    #    Postgres 13, and creating extensions can be refused.
+    s1 = s1.replace('create extension if not exists "pgcrypto";\n', '')
+
+    # 4. Split out the auth.users trigger. Supabase frequently refuses
+    #    `create trigger` on auth.users (the SQL editor role does not own it),
+    #    and a failure there would otherwise abort the whole script. It goes
+    #    last, clearly marked, with a manual fallback documented.
+    tstart = s1.index('create trigger on_auth_user_created')
+    tend = s1.index(';', s1.index('execute function public.handle_new_user()')) + 1
+    auth_trigger = s1[tstart:tend]
+    s1 = s1[:tstart] + s1[tend:]
+
+    # 5. One grant per function, with explicit empty argument lists.
+    s2 = s2.replace(
+        "grant execute on function public.current_app_role, public.is_admin, public.is_staff\n  to authenticated;",
+        "grant execute on function public.current_app_role() to authenticated;\n"
+        "grant execute on function public.is_admin() to authenticated;\n"
+        "grant execute on function public.is_staff() to authenticated;")
+
     body = s1 + s2 + s3
-    body = body.replace('as $$', 'as $fn$').replace('$$;', '$fn$;')
+
+    # 6. Remove dollar quoting entirely. Function bodies become ordinary
+    #    single-quoted strings with internal quotes doubled, so there is not a
+    #    single `$` left for any statement splitter to misread.
+    def undollar(m):
+        inner = m.group(1).replace("'", "''")
+        return "as '" + inner + "'"
+    body = re.sub(r"as \$\$(.*?)\$\$", undollar, body, flags=re.S)
 
     assert 'do $$' not in body, 'a do-block survived'
-    assert '%1$s' not in body, 'positional format arg survived'
-    assert body.count('$fn$') % 2 == 0, 'unbalanced function quoting'
+    assert '$' not in body, 'a dollar sign survived: ' + body[max(0,body.index('$')-60):body.index('$')+60]
 
     header = """-- ============================================================================
 -- NevadoMedia dashboard — complete database setup
@@ -146,7 +170,30 @@ def build():
 --   -- then paste this file again
 -- ============================================================================
 """
-    (here / 'setup.sql').write_text(header + body + '\n' + seed + footer)
+    part2 = '''
+
+-- ============================================================================
+-- PART 2 — run this ONLY if Part 1 above succeeded.
+--
+-- This makes new sign-ups get a profile row automatically. Supabase sometimes
+-- refuses to let the SQL editor add a trigger to auth.users. If this part
+-- errors, everything else is still fine and you can ignore it — just run the
+-- snippet under "If Part 2 failed" below after creating your users.
+-- ============================================================================
+
+''' + auth_trigger + '''
+
+-- If Part 2 failed, create your users in Authentication -> Users first, then
+-- run this to give them their roles:
+--
+--   insert into public.profiles (id, email, full_name, role)
+--   select id, email, split_part(email, '@', 1),
+--          case when lower(email) = 'sebastian@nevadomedia.info'
+--               then 'admin'::user_role else 'operator'::user_role end
+--   from auth.users
+--   on conflict (id) do update set role = excluded.role;
+'''
+    (here / 'setup.sql').write_text(header + body + '\n' + seed + footer + part2)
     print('setup.sql written')
 
 build()

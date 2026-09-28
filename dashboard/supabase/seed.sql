@@ -46,7 +46,7 @@ join public.clients c on c.name = v.client_name
 on conflict (provider, account_id) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Monthly expenses — $2,500/mo total
+-- Monthly expenses — 2,500 per month total
 -- ---------------------------------------------------------------------------
 insert into public.expenses (month, category, amount)
 values

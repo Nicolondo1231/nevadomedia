@@ -12,7 +12,6 @@
 -- NevadoMedia BI Dashboard — schema
 -- Phase 1. Run against a fresh Supabase project, in order, before 0002_rls.sql.
 
-create extension if not exists "pgcrypto";
 
 -- ---------------------------------------------------------------------------
 -- Enums
@@ -34,12 +33,12 @@ create type assignment_status  as enum ('pending', 'in_progress', 'delivered', '
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
-as $fn$
+as '
 begin
   new.updated_at = now();
   return new;
 end;
-$fn$;
+';
 
 -- ---------------------------------------------------------------------------
 -- profiles — one row per auth user, carries the role that RLS keys off
@@ -59,26 +58,24 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $fn$
+as '
 begin
   insert into public.profiles (id, email, full_name, role)
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
-    case when lower(new.email) in ('sebastian@nevadomedia.info')
-         then 'admin'::user_role
-         else 'operator'::user_role
+    coalesce(new.raw_user_meta_data ->> ''full_name'', split_part(new.email, ''@'', 1)),
+    case when lower(new.email) in (''sebastian@nevadomedia.info'')
+         then ''admin''::user_role
+         else ''operator''::user_role
     end
   )
   on conflict (id) do nothing;
   return new;
 end;
-$fn$;
+';
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+
 
 -- ---------------------------------------------------------------------------
 -- clients
@@ -114,7 +111,7 @@ create or replace function public.days_until_renewal(c public.clients)
 returns integer
 language sql
 stable
-as $fn$ select (c.renewal_date - current_date)::int $fn$;
+as ' select (c.renewal_date - current_date)::int ';
 
 -- ---------------------------------------------------------------------------
 -- onboarding_checklist
@@ -505,7 +502,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $fn$ select role from public.profiles where id = auth.uid() $fn$;
+as ' select role from public.profiles where id = auth.uid() ';
 
 create or replace function public.is_admin()
 returns boolean
@@ -513,7 +510,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $fn$ select coalesce(public.current_app_role() = 'admin', false) $fn$;
+as ' select coalesce(public.current_app_role() = ''admin'', false) ';
 
 create or replace function public.is_staff()
 returns boolean
@@ -521,10 +518,11 @@ language sql
 stable
 security definer
 set search_path = public
-as $fn$ select public.current_app_role() is not null $fn$;
+as ' select public.current_app_role() is not null ';
 
-grant execute on function public.current_app_role, public.is_admin, public.is_staff
-  to authenticated;
+grant execute on function public.current_app_role() to authenticated;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.is_staff() to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Enable RLS everywhere. Default-deny: a table with RLS on and no matching
@@ -794,7 +792,7 @@ join public.clients c on c.name = v.client_name
 on conflict (provider, account_id) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Monthly expenses — $2,500/mo total
+-- Monthly expenses — 2,500 per month total
 -- ---------------------------------------------------------------------------
 insert into public.expenses (month, category, amount)
 values
@@ -846,3 +844,27 @@ where c.active
 --     grant all on tables to anon, authenticated, service_role;
 --   -- then paste this file again
 -- ============================================================================
+
+
+-- ============================================================================
+-- PART 2 — run this ONLY if Part 1 above succeeded.
+--
+-- This makes new sign-ups get a profile row automatically. Supabase sometimes
+-- refuses to let the SQL editor add a trigger to auth.users. If this part
+-- errors, everything else is still fine and you can ignore it — just run the
+-- snippet under "If Part 2 failed" below after creating your users.
+-- ============================================================================
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- If Part 2 failed, create your users in Authentication -> Users first, then
+-- run this to give them their roles:
+--
+--   insert into public.profiles (id, email, full_name, role)
+--   select id, email, split_part(email, '@', 1),
+--          case when lower(email) = 'sebastian@nevadomedia.info'
+--               then 'admin'::user_role else 'operator'::user_role end
+--   from auth.users
+--   on conflict (id) do update set role = excluded.role;
