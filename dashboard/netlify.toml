@@ -1,11 +1,10 @@
-# Static hosting only. No functions, no scheduled functions, no background
-# functions — every integration and every cron runs on the Hostinger VPS so
-# this site never consumes build-plugin or function credits.
+# Secondary config, read relative to the `base` directory set in the ROOT
+# netlify.toml. Paths here are therefore base-relative, not repo-relative.
+# The root file is the authoritative one; keep the two in step.
 
 [build]
-  base    = "dashboard"
   command = "npm run build"
-  publish = "dashboard/dist"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
