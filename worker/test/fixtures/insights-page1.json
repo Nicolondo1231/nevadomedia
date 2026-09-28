@@ -1,0 +1,36 @@
+{
+  "data": [
+    {
+      "date_start": "2026-09-27", "date_stop": "2026-09-27",
+      "campaign_id": "120200", "campaign_name": "Kitchens — Fairfield County",
+      "adset_id": "120300", "adset_name": "Homeowners 35-65 | 06880,06830",
+      "ad_id": "120400", "ad_name": "Marble install before/after",
+      "spend": "184.52", "impressions": "12043", "reach": "9120",
+      "frequency": "1.3205", "clicks": "412", "ctr": "3.4210", "cpm": "15.3210",
+      "actions": [
+        { "action_type": "post_engagement", "value": "530" },
+        { "action_type": "onsite_conversion.lead_grouped", "value": "6" },
+        { "action_type": "lead", "value": "6" }
+      ],
+      "cost_per_action_type": [
+        { "action_type": "lead", "value": "30.7533" },
+        { "action_type": "post_engagement", "value": "0.348" }
+      ],
+      "quality_ranking": "ABOVE_AVERAGE",
+      "engagement_rate_ranking": "AVERAGE"
+    },
+    {
+      "date_start": "2026-09-27", "date_stop": "2026-09-27",
+      "campaign_id": "120200", "campaign_name": "Kitchens — Fairfield County",
+      "adset_id": "120300", "adset_name": "Homeowners 35-65 | 06880,06830",
+      "ad_id": "120401", "ad_name": "Testimonial — Greenwich",
+      "spend": "96.00", "impressions": "4300", "reach": "3980",
+      "frequency": "1.0804", "clicks": "180", "ctr": "4.1860", "cpm": "22.3256",
+      "actions": [{ "action_type": "post_engagement", "value": "210" }],
+      "cost_per_action_type": [],
+      "quality_ranking": "AVERAGE",
+      "engagement_rate_ranking": "BELOW_AVERAGE_35"
+    }
+  ],
+  "paging": { "next": "https://graph.facebook.com/v21.0/act_1/insights?after=PAGE2" }
+}

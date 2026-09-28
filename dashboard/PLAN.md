@@ -1,9 +1,10 @@
 # NevadoMedia BI Dashboard — Build Plan
 
-Status: **phases 1–3 code complete, not yet deployed.** Schema, RLS, auth, the
+Status: **phases 1–4 code complete, not yet deployed.** Schema, RLS, auth, the
 navigation shell, all ten section frames and every manual-input section are
-built and verified locally. Deployment is blocked on §4. Phase 4 not started
-(it needs the Meta token and Julian's account id).
+built and verified locally, plus the VPS worker and the Meta sync. Deployment
+is blocked on §4; the Meta sync additionally needs the token and Julian's
+account id before it can run against live data.
 
 Chart palettes are fixed and validated (see `src/index.css`): a four-slot
 categorical series order for the CPL trend, and a six-step ordinal ramp for the

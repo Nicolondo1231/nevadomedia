@@ -1,0 +1,15 @@
+[Unit]
+Description=NevadoMedia daily data sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=nevado
+WorkingDirectory=/opt/nevado-worker
+EnvironmentFile=/opt/nevado-worker/.env
+ExecStart=/usr/bin/node src/cli.js sync --days 30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

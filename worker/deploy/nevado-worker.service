@@ -1,0 +1,27 @@
+# Long-running refresh endpoint.
+#   sudo cp deploy/*.service deploy/*.timer /etc/systemd/system/
+#   sudo systemctl enable --now nevado-worker.service nevado-sync.timer
+
+[Unit]
+Description=NevadoMedia dashboard worker (refresh endpoint)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nevado
+WorkingDirectory=/opt/nevado-worker
+EnvironmentFile=/opt/nevado-worker/.env
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+
+# The worker holds every API secret; give it no more of the box than it needs.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/nevado-worker
+
+[Install]
+WantedBy=multi-user.target

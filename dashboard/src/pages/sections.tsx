@@ -36,17 +36,6 @@ function Section({
   )
 }
 
-export const AdPerformance = () => (
-  <Section
-    title="Ad Performance"
-    description="Live from the Meta Marketing API across all four ad accounts."
-    source="meta"
-    emptyTitle="Meta data arrives in phase 4"
-    emptyBody="The table, the 1D/7D/14D/30D switcher, the CPL trend chart, the CPL and CTR flags and the manual refresh button are built once the Meta token and Julian's account id are in place."
-    phase="Phase 4"
-  />
-)
-
 export const ContentPerformance = () => (
   <Section
     title="Content Performance"

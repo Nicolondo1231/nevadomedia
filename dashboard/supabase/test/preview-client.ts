@@ -104,6 +104,44 @@ const TABLES: Record<string, Record<string, unknown>[]> = {
     ]
   })(),
   app_settings: [{ id: 'a1', key: 'team_size', value: 3 }],
+  ad_accounts: [
+    { id: 'aa1', client_id: 'c1', provider: 'meta', account_id: 'act_PENDING_JULIAN', label: 'Julian | Premier Marble Kitchens', active: true },
+    { id: 'aa2', client_id: 'c2', provider: 'meta', account_id: 'act_1759311301271024', label: 'Julio | Jay Pro Finish', active: true },
+    { id: 'aa3', client_id: 'c5', provider: 'meta', account_id: 'act_443475824888837', label: 'NevadoMedia Nicogrowth', active: true },
+    { id: 'aa4', client_id: 'c6', provider: 'meta', account_id: 'act_919241897734064', label: 'Andrew | Best Pro Service', active: true },
+  ],
+  meta_insights_daily: (() => {
+    // 30 days across four accounts, with deliberately varied CPL and CTR so
+    // the red/yellow thresholds and the "no leads" gaps are all exercised.
+    const accounts = [
+      { id: 'act_PENDING_JULIAN', campaign: 'Kitchens — Fairfield County', ad: 'Marble install before/after', base: 38, ctr: 3.9, spend: 180 },
+      { id: 'act_1759311301271024', campaign: 'Interior repaint — Union NJ', ad: 'Cabinet refinish time-lapse', base: 62, ctr: 2.8, spend: 120 },
+      { id: 'act_443475824888837', campaign: 'Agency — subcontractor offer', ad: 'VSL cold traffic', base: 24, ctr: 4.6, spend: 90 },
+      { id: 'act_919241897734064', campaign: 'Decks & fences — Essex', ad: 'Deck staining spotlight', base: 47, ctr: 3.4, spend: 140 },
+    ]
+    const rows = []
+    for (let d = 29; d >= 0; d--) {
+      const date = new Date(Date.now() - d * 86_400_000).toISOString().slice(0, 10)
+      for (const [i, a] of accounts.entries()) {
+        // Deterministic wobble so screenshots are reproducible.
+        const wobble = Math.sin((d + i * 7) / 3.1) * 0.28 + Math.cos(d / 5.3) * 0.12
+        const cpl = Math.max(8, a.base * (1 + wobble))
+        const spend = a.spend * (1 + wobble / 2)
+        const leads = d % 9 === i ? 0 : Math.max(1, Math.round(spend / cpl))
+        const impressions = Math.round(spend * 70)
+        rows.push({
+          id: `${a.id}-${date}`, account_id: a.id, date,
+          campaign_name: a.campaign, ad_name: a.ad,
+          spend: Number(spend.toFixed(2)),
+          impressions, reach: Math.round(impressions * 0.78),
+          clicks: Math.round(impressions * (a.ctr / 100)),
+          ctr: a.ctr, cpm: Number(((spend / impressions) * 1000).toFixed(2)),
+          leads, cpl: leads > 0 ? Number((spend / leads).toFixed(2)) : null,
+        })
+      }
+    }
+    return rows
+  })(),
   sync_freshness: [
     { source: 'meta', last_success_at: new Date(Date.now() - 3 * 3600_000).toISOString(), is_stale: false },
     { source: 'metricool', last_success_at: new Date(Date.now() - 31 * 3600_000).toISOString(), is_stale: true },

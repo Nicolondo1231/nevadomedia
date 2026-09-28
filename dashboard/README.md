@@ -66,9 +66,10 @@ Set two environment variables in Site configuration → Environment variables:
 ```
 VITE_SUPABASE_URL       = https://<ref>.supabase.co
 VITE_SUPABASE_ANON_KEY  = <anon key>
+VITE_WORKER_URL         = https://<vps-host>/worker   # phase 4 onward
 ```
 
-Only those two. The service role key must never appear in the frontend
+The service role key must never appear in the frontend
 environment — it would ship inside the JavaScript bundle and hand any visitor
 full database access.
 

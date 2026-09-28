@@ -1,0 +1,17 @@
+{
+  "name": "nevadomedia-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Data sync worker for the NevadoMedia dashboard. Runs on the Hostinger VPS.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "sync": "node src/cli.js sync",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
+  },
+  "engines": { "node": ">=22" }
+}

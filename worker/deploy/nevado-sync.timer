@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the NevadoMedia data sync every morning
+
+[Timer]
+# 07:00 America/New_York. systemd applies the timezone including daylight
+# saving, which is why the schedule lives here rather than inside the process.
+OnCalendar=*-*-* 07:00:00 America/New_York
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
