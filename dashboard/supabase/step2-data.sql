@@ -2,7 +2,7 @@
 -- STEP 2 of 3 — your clients and expenses
 -- Select all of this file, paste into the Supabase SQL Editor,
 -- click Run, and wait for "Success".
--- Run this only after Step 1 says Success.
+-- Run only after Step 1 says Success.
 -- ============================================================
 
 -- Clients

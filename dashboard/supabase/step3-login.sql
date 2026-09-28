@@ -2,7 +2,7 @@
 -- STEP 3 of 3 — automatic profiles (optional)
 -- Select all of this file, paste into the Supabase SQL Editor,
 -- click Run, and wait for "Success".
--- If this one errors, ignore it — the dashboard still works.
+-- If this errors, ignore it — the dashboard still works.
 -- ============================================================
 
 -- PART 2 — run this ONLY if Part 1 above succeeded.

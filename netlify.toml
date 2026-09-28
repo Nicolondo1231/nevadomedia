@@ -15,18 +15,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Serverless functions: one scheduled daily Meta sync and one on-demand
-# refresh. A daily cron is ~30 invocations a month against a 125,000 free
-# allowance, so this costs nothing and replaces the separate VPS entirely.
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# Keep function routes off the SPA catch-all.
-[[redirects]]
-  from   = "/api/refresh"
-  to     = "/.netlify/functions/refresh"
-  status = 200
+# No functions are deployed. Scheduled syncs run on the Hostinger VPS
+# (see worker/), so Netlify serves static files only and consumes no function
+# credits. The files under dashboard/netlify/functions remain in the repo,
+# unused, in case that decision is ever revisited.
 
 # SPA routing: every other path resolves to index.html so deep links work.
 [[redirects]]

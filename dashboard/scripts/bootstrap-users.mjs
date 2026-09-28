@@ -27,7 +27,7 @@ const admin = createClient(url, serviceKey, {
 
 const ACCOUNTS = [
   { email: 'sebastian@nevadomedia.info', full_name: 'Sebastian', role: 'admin' },
-  { email: 'nico@nevadomedia.info', full_name: 'Nico', role: 'operator' },
+  { email: 'nicolas@nevadomedia.info', full_name: 'Nico', role: 'admin' },
 ]
 
 /** Returns the existing auth user for an email, or null. */

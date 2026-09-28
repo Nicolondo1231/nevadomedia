@@ -55,7 +55,12 @@ begin
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
-    case when lower(new.email) in ('sebastian@nevadomedia.info')
+    -- Both founders hold admin: identical permissions, both see and edit
+    -- everything. The operator role remains defined for a future hire.
+    case when lower(new.email) in (
+           'sebastian@nevadomedia.info',
+           'nicolas@nevadomedia.info'
+         )
          then 'admin'::user_role
          else 'operator'::user_role
     end
