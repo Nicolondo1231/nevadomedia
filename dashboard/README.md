@@ -83,8 +83,21 @@ npm run dev
 ## Tests
 
 ```sh
-./supabase/test/run-tests.sh
+./supabase/test/run-tests.sh          # schema, RLS and role boundary
+node supabase/test/check-columns.mjs  # UI columns exist in the schema
+VITE_PREVIEW=1 npm run dev            # real screens against in-memory fixtures
 ```
+
+`check-columns.mjs` compares every row interface the frontend declares against
+`information_schema`, so a mistyped column is caught here rather than as a
+runtime error after deploy. It needs the test cluster from `run-tests.sh` up.
+
+`VITE_PREVIEW=1` aliases the Supabase client to an in-memory stand-in
+(`supabase/test/preview-client.ts`) so the screens render with realistic rows
+without a live project. The alias is off unless that variable is set, so the
+fixtures never reach a production bundle.
+
+### run-tests.sh
 
 Starts a throwaway Postgres 16 on port 55432, applies a minimal Supabase
 stand-in (`auth.users`, `auth.uid()`, the `anon`/`authenticated` roles and

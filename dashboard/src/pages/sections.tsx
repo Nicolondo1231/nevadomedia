@@ -36,16 +36,6 @@ function Section({
   )
 }
 
-export const ClientTracker = () => (
-  <Section
-    title="Client Tracker"
-    description="One card per client: payment, renewal, onboarding, content, ads and notes."
-    emptyTitle="Client cards arrive in phase 3"
-    emptyBody="Six clients are already seeded in the database. Phase 3 builds the card UI, the onboarding checklist, the communication log and the auto-saving fields."
-    phase="Phase 3"
-  />
-)
-
 export const AdPerformance = () => (
   <Section
     title="Ad Performance"
@@ -68,36 +58,6 @@ export const ContentPerformance = () => (
   />
 )
 
-export const Finances = () => (
-  <Section
-    title="Finances"
-    description="MRR contracted against collected, expenses, net profit, churn and close rate."
-    emptyTitle="Finance views arrive in phase 3"
-    emptyBody="The $2,500 monthly expense rows are seeded. Phase 3 builds the manual side; phase 7 connects Stripe for collected revenue."
-    phase="Phase 3 · Stripe in phase 7"
-  />
-)
-
-export const WeeklyMetrics = () => (
-  <Section
-    title="Weekly Metrics"
-    description="Calls booked, show rate, close rate, revenue, churn and outstanding tasks, week over week."
-    emptyTitle="Weekly entry arrives in phase 3"
-    emptyBody="Manual input with an auto-timestamp, plus a four-week trend for each measure."
-    phase="Phase 3"
-  />
-)
-
-export const ContentPipeline = () => (
-  <Section
-    title="Content Pipeline"
-    description="Every piece of content across all clients."
-    emptyTitle="The kanban board arrives in phase 3"
-    emptyBody="Six stages from Scripted to Posted, drag and drop between them, colour coded by client, filterable by client or format."
-    phase="Phase 3"
-  />
-)
-
 export const Funnel = () => (
   <Section
     title="Funnel Performance"
@@ -108,23 +68,3 @@ export const Funnel = () => (
   />
 )
 
-export const CallsIntel = () => (
-  <Section
-    title="Calls & Intel"
-    description="Fathom recordings classified and summarised, plus the Sales 2026 pipeline."
-    source="fathom"
-    emptyTitle="Call intelligence arrives in phase 8"
-    emptyBody="The sales pipeline board is built in phase 3 and starts syncing from GoHighLevel in phase 5; Fathom summaries and action items land in phase 8."
-    phase="Phase 3 · 5 · 8"
-  />
-)
-
-export const Team = () => (
-  <Section
-    title="Team"
-    description="Editor and Caleb assignments, deadlines, delivery and payment status."
-    emptyTitle="Team assignments arrive in phase 3"
-    emptyBody="Manual entry with overdue items flagged in red."
-    phase="Phase 3"
-  />
-)

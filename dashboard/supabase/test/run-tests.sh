@@ -31,6 +31,7 @@ echo "==> applying shim + migrations + seed (seed twice, to prove idempotency)"
 $PSQL -f supabase/test/00_supabase_shim.sql        >/dev/null
 $PSQL -f supabase/migrations/0001_schema.sql       >/dev/null
 $PSQL -f supabase/migrations/0002_rls.sql          >/dev/null
+$PSQL -f supabase/migrations/0003_phase3.sql       >/dev/null
 $PSQL -f supabase/seed.sql                         >/dev/null
 $PSQL -f supabase/seed.sql                         >/dev/null
 $PSQL -c "insert into auth.users (id,email) values
@@ -67,6 +68,9 @@ assert "expense insert blocked"     "ERROR"    authenticated "$OP" "insert into 
 assert "client insert blocked"      "ERROR"    authenticated "$OP" "insert into public.clients_ops (name) values ('nope')"
 assert "client delete blocked"      "ERROR"    authenticated "$OP" "delete from public.clients_ops where name='Karol'"
 
+assert "app_settings blocked"       "0"        authenticated "$OP" "select count(*) from public.app_settings"
+assert "app_settings write blocked" "ERROR"    authenticated "$OP" "insert into public.app_settings (key,value) values ('x','1')"
+
 echo "==> operator can do operations"
 assert "notes update allowed"       "UPDATE 1" authenticated "$OP" "update public.clients_ops set notes='x' where name='Karol'"
 assert "content card insert"        "INSERT 0 1" authenticated "$OP" "insert into public.content_pipeline (client_id,title) select id,'t' from public.clients_ops limit 1"
@@ -75,6 +79,7 @@ echo "==> admin (Sebastian) sees everything"
 assert "clients visible"            "6"        authenticated "$AD" "select count(*) from public.clients"
 assert "retainer sum"               "4500"     authenticated "$AD" "select sum(retainer) from public.clients"
 assert "expenses sum"               "2500"     authenticated "$AD" "select sum(amount) from public.expenses"
+assert "team_size setting"          "3"        authenticated "$AD" "select value::text from public.app_settings where key='team_size'"
 
 echo "==> anonymous visitor: funnel write-only"
 assert "funnel insert allowed"      "INSERT 0 1" anon "" "insert into public.funnel_events (session_id,stage) values ('abcd1234efgh','visitor')"

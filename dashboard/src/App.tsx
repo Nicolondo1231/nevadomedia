@@ -5,10 +5,13 @@ import { LoginPage } from './auth/LoginPage'
 import { AppLayout } from './app/AppLayout'
 import { CommandCenter } from './pages/CommandCenter'
 import { NotFound } from './pages/NotFound'
-import {
-  ClientTracker, AdPerformance, ContentPerformance, Finances,
-  WeeklyMetrics, ContentPipeline, Funnel, CallsIntel, Team,
-} from './pages/sections'
+import { AdPerformance, ContentPerformance, Funnel } from './pages/sections'
+import { ClientTracker } from './pages/ClientTracker'
+import { ContentPipeline } from './pages/ContentPipeline'
+import { Finances } from './pages/Finances'
+import { WeeklyMetrics } from './pages/WeeklyMetrics'
+import { Team } from './pages/Team'
+import { CallsIntel } from './pages/CallsIntel'
 
 export default function App() {
   return (
