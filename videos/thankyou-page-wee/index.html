@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      /* OS-bundled colour emoji — declared so the renderer keeps the glyphs */
+      @font-face { font-family: "Noto Color Emoji"; src: local("Noto Color Emoji"); }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+
+      #root {
+        width: 100%; height: 100%; position: relative; overflow: hidden; background: #000;
+        font-family: ui-sans-serif, system-ui, "Noto Color Emoji", sans-serif;
+      }
+
+      #plate { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #plate video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+      /* ── key-point visual, sits above his head ──────────────── */
+      /* his hairline sits at ~30% of frame height, so the band above is free */
+      #callout {
+        position: absolute; left: 60px; right: 60px; top: 7%;
+        display: flex; flex-direction: column; align-items: center; gap: 18px;
+      }
+      #calloutcard {
+        background: #16A34A; border: 8px solid #0B2E17; border-radius: 34px;
+        padding: 30px 44px; text-align: center; transform-origin: 50% 100%;
+        box-shadow: 0 22px 48px rgba(0,0,0,0.42);
+      }
+      #calloutcard .line1 {
+        font-size: 76px; font-weight: 900; line-height: 1.04; letter-spacing: -0.02em;
+        color: #FFFFFF; text-transform: uppercase;
+      }
+      /* the accent word is a yellow chip with dark ink — yellow-on-green text is unreadable */
+      #calloutcard .line1 em {
+        font-style: normal; display: inline-block; color: #0B2E17; background: #FACC15;
+        border-radius: 18px; padding: 4px 22px 10px; margin-top: 10px;
+      }
+      #calloutemoji {
+        font-size: 74px; line-height: 1; color: #FACC15; background: #0B2E17;
+        width: 130px; height: 130px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 7px solid #FACC15; box-shadow: 0 16px 34px rgba(0,0,0,0.42);
+      }
+      #confetti { position: absolute; inset: 0; pointer-events: none; }
+      .conf { position: absolute; width: 26px; height: 26px; border-radius: 6px; }
+
+      /* ── caption rail ───────────────────────────────────────── */
+      #captions {
+        position: absolute; left: 70px; right: 70px; bottom: 13%;
+        display: flex; justify-content: center;
+      }
+      .cap {
+        font-size: 66px; font-weight: 900; line-height: 1.16; letter-spacing: -0.02em;
+        color: #FFFFFF; text-align: center; text-transform: uppercase;
+        text-shadow: 0 6px 0 rgba(0,0,0,0.55), 0 0 26px rgba(0,0,0,0.5);
+        -webkit-text-stroke: 5px #0B2E17;
+        paint-order: stroke fill;
+      }
+      /* highlighted words sit on a solid chip so they stay readable over any frame */
+      .cap b, .cap i {
+        display: inline-block; font-weight: 900; border-radius: 16px;
+        padding: 0 18px 6px; -webkit-text-stroke: 0; margin: 0 4px;
+      }
+      .cap b { color: #0B2E17; background: #FACC15; }
+      .cap i { color: #0B2E17; background: #4ADE80; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="8"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="plate">
+        <video id="plateVideo" src="media/thankyou.mp4" muted playsinline data-start="0" data-duration="8"></video>
+      </div>
+
+      <div id="confetti"></div>
+
+      <div id="callout">
+        <div id="calloutcard">
+          <div class="line1">Your date is<br /><em>reserved!</em></div>
+        </div>
+        <div id="calloutemoji">🎉</div>
+      </div>
+
+      <div id="captions">
+        <div class="cap" id="cap1">This is how your <b>captions</b> will look</div>
+      </div>
+
+      <audio id="vo" src="media/thankyou-audio.m4a" data-start="0"></audio>
+    </div>
+
+    <script>
+      (function () {
+        // deterministic confetti — position and colour derive from the index
+        const wrap = document.getElementById("confetti");
+        const cols = ["#16A34A", "#FACC15", "#4ADE80", "#FDE68A"];
+        const bits = [];
+        for (let i = 0; i < 18; i++) {
+          const d = document.createElement("div");
+          d.className = "conf";
+          d.style.background = cols[i % cols.length];
+          d.style.left = 90 + ((i * 137) % 900) + "px";
+          d.style.top = 180 + ((i * 83) % 260) + "px";
+          wrap.appendChild(d);
+          bits.push(d);
+        }
+
+        const CALL_IN = 1.0;   // the key-point visual lands
+        const CAP_IN = 4.2;    // sample caption
+
+        gsap.set("#callout", { opacity: 0 });
+        gsap.set(bits, { opacity: 0 });
+        gsap.set("#cap1", { opacity: 0 });
+
+        const tl = gsap.timeline({ paused: true });
+
+        // key-point visual: pops above his head, holds, no drift
+        tl.to("#callout", { opacity: 1, duration: 0.01, ease: "none" }, CALL_IN);
+        tl.fromTo("#calloutcard", { scale: 0.4, y: 60, rotate: -4 },
+                                  { scale: 1, y: 0, rotate: -2, duration: 0.5, ease: "power3.out" }, CALL_IN);
+        tl.fromTo("#calloutemoji", { scale: 0, y: -30 },
+                                   { scale: 1, y: 0, duration: 0.45, ease: "power3.out" }, CALL_IN + 0.18);
+        tl.fromTo(bits, { opacity: 0, y: 0, scale: 0.4 },
+                        { opacity: 1, y: -70, scale: 1, duration: 0.7, stagger: 0.012, ease: "power2.out" }, CALL_IN + 0.1);
+        tl.to(bits, { opacity: 0, y: 130, duration: 0.9, stagger: 0.012, ease: "power1.in" }, CALL_IN + 0.75);
+
+        // captions: one chunk on screen at a time, no motion once set
+        tl.fromTo("#cap1", { opacity: 0, y: 26, scale: 0.94 },
+                           { opacity: 1, y: 0, scale: 1, duration: 0.24, ease: "power3.out" }, CAP_IN);
+
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

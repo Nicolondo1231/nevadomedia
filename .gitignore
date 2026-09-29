@@ -8,3 +8,7 @@ videos/*/renders/
 videos/*/assets/voice/
 videos/*/assets/voice_raw/
 videos/*/node_modules/
+
+# Source footage and transcoded media — large binaries, kept out of git
+videos/_footage/
+videos/*/media/
