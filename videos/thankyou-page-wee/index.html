@@ -19,42 +19,41 @@
       #plate { position: absolute; inset: 0; width: 100%; height: 100%; }
       #plate video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-      /* ── key-point visual, sits above his head ──────────────── */
-      /* his hairline sits at ~30% of frame height, so the band above is free */
-      #callout {
-        position: absolute; left: 60px; right: 60px; top: 7%;
-        display: flex; flex-direction: column; align-items: center; gap: 18px;
+      /* ── key-point visuals, in the band above his head ──────── */
+      /* his hairline holds at ~30% of frame height for the whole take */
+      #calloutlayer { position: absolute; left: 56px; right: 56px; top: 5%; height: 24%; }
+      .callout {
+        position: absolute; left: 0; right: 0; top: 0;
+        display: flex; flex-direction: column; align-items: center; gap: 16px;
       }
-      #calloutcard {
+      .card {
         background: #16A34A; border: 8px solid #0B2E17; border-radius: 34px;
-        padding: 30px 44px; text-align: center; transform-origin: 50% 100%;
+        padding: 26px 40px; text-align: center; transform-origin: 50% 100%;
         box-shadow: 0 22px 48px rgba(0,0,0,0.42);
       }
-      #calloutcard .line1 {
-        font-size: 76px; font-weight: 900; line-height: 1.04; letter-spacing: -0.02em;
+      .card .t {
+        font-size: 68px; font-weight: 900; line-height: 1.05; letter-spacing: -0.02em;
         color: #FFFFFF; text-transform: uppercase;
       }
       /* the accent word is a yellow chip with dark ink — yellow-on-green text is unreadable */
-      #calloutcard .line1 em {
+      .card .t em {
         font-style: normal; display: inline-block; color: #0B2E17; background: #FACC15;
-        border-radius: 18px; padding: 4px 22px 10px; margin-top: 10px;
+        border-radius: 16px; padding: 2px 20px 8px; margin-top: 8px;
       }
-      #calloutemoji {
-        font-size: 74px; line-height: 1; color: #FACC15; background: #0B2E17;
-        width: 130px; height: 130px; border-radius: 50%;
+      .emoji {
+        font-size: 64px; line-height: 1; color: #FACC15; background: #0B2E17;
+        width: 114px; height: 114px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         border: 7px solid #FACC15; box-shadow: 0 16px 34px rgba(0,0,0,0.42);
       }
       #confetti { position: absolute; inset: 0; pointer-events: none; }
-      .conf { position: absolute; width: 26px; height: 26px; border-radius: 6px; }
+      .conf { position: absolute; width: 24px; height: 24px; border-radius: 6px; }
 
-      /* ── caption rail ───────────────────────────────────────── */
-      #captions {
-        position: absolute; left: 70px; right: 70px; bottom: 13%;
-        display: flex; justify-content: center;
-      }
+      /* ── caption rail — raised clear of the lower third ─────── */
+      #captions { position: absolute; left: 70px; right: 70px; bottom: 24%; height: 200px; }
       .cap {
-        font-size: 66px; font-weight: 900; line-height: 1.16; letter-spacing: -0.02em;
+        position: absolute; left: 0; right: 0; bottom: 0;
+        font-size: 62px; font-weight: 900; line-height: 1.18; letter-spacing: -0.02em;
         color: #FFFFFF; text-align: center; text-transform: uppercase;
         text-shadow: 0 6px 0 rgba(0,0,0,0.55), 0 0 26px rgba(0,0,0,0.5);
         -webkit-text-stroke: 5px #0B2E17;
@@ -63,7 +62,7 @@
       /* highlighted words sit on a solid chip so they stay readable over any frame */
       .cap b, .cap i {
         display: inline-block; font-weight: 900; border-radius: 16px;
-        padding: 0 18px 6px; -webkit-text-stroke: 0; margin: 0 4px;
+        padding: 0 16px 6px; -webkit-text-stroke: 0; margin: 0 3px;
       }
       .cap b { color: #0B2E17; background: #FACC15; }
       .cap i { color: #0B2E17; background: #4ADE80; }
@@ -74,68 +73,86 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="8"
+      data-duration="37.5"
       data-width="1080"
       data-height="1920"
     >
       <div id="plate">
-        <video id="plateVideo" src="media/thankyou.mp4" muted playsinline data-start="0" data-duration="8"></video>
+        <video id="plateVideo" src="media/thankyou.mp4" muted playsinline
+               data-start="0" data-duration="37.5"></video>
       </div>
 
       <div id="confetti"></div>
-
-      <div id="callout">
-        <div id="calloutcard">
-          <div class="line1">Your date is<br /><em>reserved!</em></div>
-        </div>
-        <div id="calloutemoji">🎉</div>
-      </div>
-
-      <div id="captions">
-        <div class="cap" id="cap1">This is how your <b>captions</b> will look</div>
-      </div>
+      <div id="calloutlayer"></div>
+      <div id="captions"></div>
 
       <audio id="vo" src="media/thankyou-audio.m4a" data-start="0"></audio>
     </div>
 
     <script>
       (function () {
-        // deterministic confetti — position and colour derive from the index
-        const wrap = document.getElementById("confetti");
-        const cols = ["#16A34A", "#FACC15", "#4ADE80", "#FDE68A"];
-        const bits = [];
-        for (let i = 0; i < 18; i++) {
-          const d = document.createElement("div");
-          d.className = "conf";
-          d.style.background = cols[i % cols.length];
-          d.style.left = 90 + ((i * 137) % 900) + "px";
-          d.style.top = 180 + ((i * 83) % 260) + "px";
-          wrap.appendChild(d);
-          bits.push(d);
-        }
+        // Key points, anchored to speech timings measured off the audio track.
+        const CALLOUTS = [
+          { t: 1.2,  hold: 3.8, text: "Your date is", accent: "reserved!", emoji: "🎉", party: true },
+          { t: 13.5, hold: 2.5, text: "Live", accent: "exotic animals", emoji: "🦜" },
+          { t: 16.2, hold: 2.0, text: "The kids can", accent: "hold them!", emoji: "🤗" },
+          { t: 18.3, hold: 2.3, text: "Amazing", accent: "photos", emoji: "📸" },
+          { t: 20.8, hold: 2.7, text: "No", accent: "deposit needed", emoji: "✅" },
+          { t: 26.0, hold: 2.7, text: "Just one", accent: "quick note", emoji: "📝" },
+          { t: 30.3, hold: 3.3, text: "Need to cancel? give us", accent: "15 days", emoji: "🗓️" },
+          { t: 34.2, hold: 3.3, text: "See you", accent: "very soon!", emoji: "🎊", party: true },
+        ];
 
-        const CALL_IN = 1.0;   // the key-point visual lands
-        const CAP_IN = 4.2;    // sample caption
-
-        gsap.set("#callout", { opacity: 0 });
-        gsap.set(bits, { opacity: 0 });
-        gsap.set("#cap1", { opacity: 0 });
-
+        const layer = document.getElementById("calloutlayer");
         const tl = gsap.timeline({ paused: true });
 
-        // key-point visual: pops above his head, holds, no drift
-        tl.to("#callout", { opacity: 1, duration: 0.01, ease: "none" }, CALL_IN);
-        tl.fromTo("#calloutcard", { scale: 0.4, y: 60, rotate: -4 },
-                                  { scale: 1, y: 0, rotate: -2, duration: 0.5, ease: "power3.out" }, CALL_IN);
-        tl.fromTo("#calloutemoji", { scale: 0, y: -30 },
-                                   { scale: 1, y: 0, duration: 0.45, ease: "power3.out" }, CALL_IN + 0.18);
-        tl.fromTo(bits, { opacity: 0, y: 0, scale: 0.4 },
-                        { opacity: 1, y: -70, scale: 1, duration: 0.7, stagger: 0.012, ease: "power2.out" }, CALL_IN + 0.1);
-        tl.to(bits, { opacity: 0, y: 130, duration: 0.9, stagger: 0.012, ease: "power1.in" }, CALL_IN + 0.75);
+        CALLOUTS.forEach((c, i) => {
+          const wrap = document.createElement("div");
+          wrap.className = "callout";
+          wrap.innerHTML =
+            '<div class="card"><div class="t">' + c.text +
+            '<br /><em>' + c.accent + "</em></div></div>" +
+            '<div class="emoji">' + c.emoji + "</div>";
+          layer.appendChild(wrap);
 
-        // captions: one chunk on screen at a time, no motion once set
-        tl.fromTo("#cap1", { opacity: 0, y: 26, scale: 0.94 },
-                           { opacity: 1, y: 0, scale: 1, duration: 0.24, ease: "power3.out" }, CAP_IN);
+          const card = wrap.querySelector(".card");
+          const emo = wrap.querySelector(".emoji");
+          const tilt = i % 2 === 0 ? -2 : 2;
+
+          gsap.set(wrap, { opacity: 0 });
+          gsap.set(card, { scale: 0.4, y: 60, rotate: tilt - 2 });
+          gsap.set(emo, { scale: 0, y: -26 });
+
+          tl.to(wrap, { opacity: 1, duration: 0.01, ease: "none" }, c.t);
+          tl.to(card, { scale: 1, y: 0, rotate: tilt, duration: 0.46, ease: "power3.out" }, c.t);
+          tl.to(emo, { scale: 1, y: 0, duration: 0.42, ease: "power3.out" }, c.t + 0.16);
+
+          // leaves the way it came in, so the next one gets the band to itself
+          const out = c.t + c.hold;
+          tl.to(card, { scale: 0.86, y: -26, duration: 0.26, ease: "power2.in" }, out);
+          tl.to(emo, { scale: 0, duration: 0.2, ease: "power2.in" }, out);
+          tl.to(wrap, { opacity: 0, duration: 0.24, ease: "power2.in" }, out);
+        });
+
+        // deterministic confetti on the two celebration beats
+        const wrapC = document.getElementById("confetti");
+        const cols = ["#16A34A", "#FACC15", "#4ADE80", "#FDE68A"];
+        CALLOUTS.filter((c) => c.party).forEach((c, k) => {
+          const bits = [];
+          for (let i = 0; i < 18; i++) {
+            const d = document.createElement("div");
+            d.className = "conf";
+            d.style.background = cols[(i + k) % cols.length];
+            d.style.left = 80 + ((i * 137 + k * 61) % 920) + "px";
+            d.style.top = 170 + ((i * 83 + k * 37) % 250) + "px";
+            wrapC.appendChild(d);
+            bits.push(d);
+          }
+          gsap.set(bits, { opacity: 0 });
+          tl.fromTo(bits, { opacity: 0, y: 0, scale: 0.4 },
+                          { opacity: 1, y: -70, scale: 1, duration: 0.7, stagger: 0.012, ease: "power2.out" }, c.t + 0.1);
+          tl.to(bits, { opacity: 0, y: 130, duration: 0.9, stagger: 0.012, ease: "power1.in" }, c.t + 0.8);
+        });
 
         window.__timelines["main"] = tl;
         tl.seek(0);
